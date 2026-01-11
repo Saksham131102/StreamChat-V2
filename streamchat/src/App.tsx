@@ -1,12 +1,14 @@
-function App() {
+import { Route, Routes } from "react-router-dom";
+import LandingPage from "./pages/LandingPage/LandingPage";
 
+function App() {
   return (
     <main>
-      <div className='p-4 bg-gray-200'>
-        <h1 className='text-2xl font-bold'>Stream<span className="text-red-600">Chat</span></h1>
-      </div>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+      </Routes>
     </main>
-  )
+  );
 }
 
-export default App
+export default App;
