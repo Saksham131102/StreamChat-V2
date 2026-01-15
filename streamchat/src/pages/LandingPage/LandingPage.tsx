@@ -6,7 +6,6 @@ import { FaGlobe, FaShield, FaUsers } from "react-icons/fa6";
 import { LuZap } from "react-icons/lu";
 
 import bgImage from "../../assets/img/Home_Background.png";
-import audienceImg from "../../assets/img/audience.jpeg";
 import LandingNav from "./LandingNav";
 
 const LandingPage = () => {
@@ -66,7 +65,7 @@ const LandingPage = () => {
                 className="mr-3 group-hover:scale-110 transition-transform"
                 size={24}
               />
-              Get Started Free
+              Get Started
             </Link>
             <button className="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white px-8 py-4 rounded-full font-semibold text-lg border border-white/20 hover:border-white/40 transition-all duration-300">
               Learn More
@@ -123,8 +122,8 @@ const LandingPage = () => {
             {/* Feature 1 */}
             <div
               className={`${
-                isDark ? "bg-transparent border-2 border-white" : "bg-white"
-              } p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2`}
+                isDark ? "bg-transparent border-2 border-gray-400" : "bg-white"
+              } p-8 rounded-xl shadow-gray-500 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2`}
             >
               <div className="w-16 h-16 bg-linear-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center mb-6">
                 <FaShield className="w-8 h-8 text-white" />
@@ -146,8 +145,8 @@ const LandingPage = () => {
             {/* Feature 2 */}
             <div
               className={`${
-                isDark ? "bg-transparent border-2 border-white" : "bg-white"
-              } p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2`}
+                isDark ? "bg-transparent border-2 border-gray-400" : "bg-white"
+              } p-8 rounded-xl shadow-gray-500 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2`}
             >
               <div className="w-16 h-16 bg-linear-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center mb-6">
                 <FaUsers className="w-8 h-8 text-white" />
@@ -169,8 +168,8 @@ const LandingPage = () => {
             {/* Feature 3 */}
             <div
               className={`${
-                isDark ? "bg-transparent border-2 border-white" : "bg-white"
-              } p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2`}
+                isDark ? "bg-transparent border-2 border-gray-400" : "bg-white"
+              } p-8 rounded-xl shadow-gray-500 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2`}
             >
               <div className="w-16 h-16 bg-linear-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mb-6">
                 <FaGlobe className="w-8 h-8 text-white" />
@@ -192,32 +191,38 @@ const LandingPage = () => {
       </section>
 
       {/* Final CTA Section */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={audienceImg}
-            alt="Join StreamChat Community"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-linear-to-r from-purple-900/70 to-red-900/70"></div>
-        </div>
-        <div className="relative container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Ready to Transform Your Streaming Experience?
-          </h2>
-          <p className="text-xl text-gray-200 mb-8 max-w-2xl mx-auto">
-            Join millions of users who have already discovered the joy of social
-            streaming. Start your free trial today.
-          </p>
-          <Link
-            to="/browse"
-            className="inline-flex items-center bg-linear-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-          >
-            <Play className="mr-3" size={24} />
-            Start Today
-          </Link>
-        </div>
-      </section>
+      <div
+        style={{
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url(${bgImage})`,
+        }}
+      >
+        <section className="relative py-20 overflow-hidden">
+          {/* <div className="absolute inset-0">
+            <img
+              src={audienceImg}
+              alt="Join StreamChat Community"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-linear-to-r from-purple-900/70 to-red-900/70"></div>
+          </div> */}
+          <div className="relative container mx-auto px-4 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+              Ready to Transform Your Streaming Experience?
+            </h2>
+            <p className="text-xl text-gray-200 mb-8 max-w-2xl mx-auto">
+              Join millions of users who have already discovered the joy of
+              social streaming. Start your free trial today.
+            </p>
+            <Link
+              to="/browse"
+              className="inline-flex items-center bg-linear-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            >
+              <Play className="mr-3" size={24} />
+              Start Today
+            </Link>
+          </div>
+        </section>
+      </div>
 
       {/* Footer Section */}
       <LandingFooter />
