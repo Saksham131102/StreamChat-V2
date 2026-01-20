@@ -154,10 +154,10 @@ const SignupPage = () => {
                     onClick={() => clearErrors("username")}
                     aria-invalid={errors.username ? "true" : "false"}
                     placeholder="Enter your email"
-                    className={`w-full pl-10 pr-4 py-3 rounded-lg border ${
-                      errors.username
-                        ? "border-red-500 ring-2 ring-red-500/20" // Error state styles
-                        : `bg-transparent border-gray-400 text-white placeholder-gray-300 ${userType === "user" ? "focus:border-red-500" : "focus:border-purple-700"}`
+                    className={`w-full pl-10 pr-4 py-3 rounded-lg border bg-transparent border-gray-400 text-white placeholder-gray-300 ${
+                      userType === "user"
+                        ? "focus:border-red-500"
+                        : "focus:border-purple-700"
                     } focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors`}
                   />
                 </div>
@@ -192,14 +192,10 @@ const SignupPage = () => {
                     onClick={() => clearErrors("email")}
                     aria-invalid={errors.email ? "true" : "false"}
                     placeholder="Enter your email"
-                    className={`w-full pl-10 pr-4 py-3 rounded-lg border ${
-                      errors.email
-                        ? "border-red-500 ring-2 ring-red-500/20" // Error state styles
-                        : `bg-transparent border-gray-400 text-white placeholder-gray-300 ${
-                            userType === "user"
-                              ? "focus:border-red-500"
-                              : "focus:border-purple-700"
-                          }`
+                    className={`w-full pl-10 pr-4 py-3 rounded-lg border bg-transparent border-gray-400 text-white placeholder-gray-300 ${
+                      userType === "user"
+                        ? "focus:border-red-500"
+                        : "focus:border-purple-700"
                     } focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors`}
                   />
                 </div>
@@ -233,14 +229,10 @@ const SignupPage = () => {
                       {...register("password")}
                       onClick={() => clearErrors("password")}
                       aria-invalid={errors.password ? "true" : "false"}
-                      className={`w-full pl-10 pr-12 py-3 rounded-lg border transition-colors focus:outline-none focus:ring-2 ${
-                        errors.password
-                          ? "border-red-500 ring-2 ring-red-500/20"
-                          : `bg-transparent border-gray-400 text-white placeholder-gray-300 ${
-                              userType === "user"
-                                ? "focus:border-red-500 focus:ring-red-500/20"
-                                : "focus:border-purple-700 focus:ring-purple-700/20"
-                            }`
+                      className={`w-full pl-10 pr-12 py-3 rounded-lg border transition-colors focus:outline-none focus:ring-2 bg-transparent border-gray-400 text-white placeholder-gray-300 ${
+                        userType === "user"
+                          ? "focus:border-red-500 focus:ring-red-500/20"
+                          : "focus:border-purple-700 focus:ring-purple-700/20"
                       }`}
                       placeholder="Create password"
                     />
@@ -281,14 +273,10 @@ const SignupPage = () => {
                       {...register("confirmPassword")}
                       onClick={() => clearErrors("confirmPassword")}
                       aria-invalid={errors.confirmPassword ? "true" : "false"}
-                      className={`w-full pl-10 pr-12 py-3 rounded-lg border transition-colors focus:outline-none focus:ring-2 ${
-                        errors.confirmPassword
-                          ? "border-red-500 ring-2 ring-red-500/20 text-white"
-                          : `bg-transparent border-gray-400 text-white placeholder-gray-300 ${
-                              userType === "user"
-                                ? "focus:border-red-500 focus:ring-red-500/20"
-                                : "focus:border-purple-700 focus:ring-purple-700/20"
-                            }`
+                      className={`w-full pl-10 pr-12 py-3 rounded-lg border transition-colors focus:outline-none focus:ring-2 bg-transparent border-gray-400 text-white placeholder-gray-300 ${
+                        userType === "user"
+                          ? "focus:border-red-500 focus:ring-red-500/20"
+                          : "focus:border-purple-700 focus:ring-purple-700/20"
                       }`}
                       placeholder="Confirm password"
                     />
@@ -373,9 +361,10 @@ const SignupPage = () => {
 
             {/* Login Link */}
             <Link
-              to="/login"
-              className={`block w-full text-center py-3 px-4 rounded-lg border-2 font-semibold transition-all duration-200 border-gray-600 text-gray-300 hover:border-gray-500 hover:bg-gray-700"
-              }`}
+              to="/signin"
+              className={`block w-full text-center py-3 px-4 rounded-lg border-2 font-semibold transition-all duration-200
+                border-gray-600 text-gray-300 hover:border-gray-500
+              `}
             >
               Sign In Instead
             </Link>
