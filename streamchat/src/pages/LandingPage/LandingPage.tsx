@@ -43,12 +43,12 @@ const LandingPage = () => {
               <FaUsers className="w-5 h-5 mr-2 text-purple-400" />
               <span className="text-sm md:text-base">Watch Together</span>
             </div>
-            <span className="text-white text-2xl">•</span>
+            <span className="text-white text-2xl max-md:hidden">•</span>
             <div className="flex items-center text-gray-300">
               <LuZap className="w-5 h-5 mr-2 text-yellow-400" />
               <span className="text-sm md:text-base">Real-time Chat</span>
             </div>
-            <span className="text-white text-2xl">•</span>
+            <span className="text-white text-2xl max-md:hidden">•</span>
             <div className="flex items-center text-gray-300">
               <FaShield className="w-5 h-5 mr-2 text-green-400" />
               <span className="text-sm md:text-base">HD Quality</span>
@@ -58,7 +58,7 @@ const LandingPage = () => {
           {/* Call-to-Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link
-              to="/browse"
+              to="/login"
               className="group bg-linear-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-8 py-4 rounded-full font-semibold text-lg flex items-center transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
               <Play
@@ -214,7 +214,7 @@ const LandingPage = () => {
               social streaming. Start your free trial today.
             </p>
             <Link
-              to="/browse"
+              to="/login"
               className="inline-flex items-center bg-linear-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
               <Play className="mr-3" size={24} />
