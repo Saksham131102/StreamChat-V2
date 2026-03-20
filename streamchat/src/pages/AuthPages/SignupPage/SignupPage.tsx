@@ -21,6 +21,7 @@ const SignupSchema = z
 type SignupFormData = z.infer<typeof SignupSchema>;
 
 const SignupPage = () => {
+  // const {signup} = useSignup();
   const navigate = useNavigate();
   const [userType, setUserType] = useState<"user" | "admin">("user");
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -44,13 +45,8 @@ const SignupPage = () => {
   });
 
   const onSubmit = async (data: SignupFormData) => {
-    try {
-      // Simulate API Call
-      console.log("Form Data:", data);
-      reset();
-    } catch (error) {
-      console.error("Submission error:", error);
-    }
+    // await signup(data);
+    console.log(data);
   };
 
   return (
