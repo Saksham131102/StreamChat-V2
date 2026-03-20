@@ -6,6 +6,7 @@ import audienceImg from "../../../assets/img/audienceImg.png";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useLogin } from "../../../hooks/auth/useLogin";
 
 // Defining validation schema
 const LoginSchema = z.object({
@@ -16,6 +17,7 @@ const LoginSchema = z.object({
 type LoginFormData = z.infer<typeof LoginSchema>;
 
 const LoginPage = () => {
+  const {login} = useLogin();
   const navigate = useNavigate();
   const [userType, setUserType] = useState<"user" | "admin">("user");
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -25,7 +27,6 @@ const LoginPage = () => {
     handleSubmit,
     clearErrors,
     formState: { errors, isSubmitting },
-    reset,
   } = useForm<LoginFormData>({
     resolver: zodResolver(LoginSchema),
     defaultValues: {
@@ -35,13 +36,8 @@ const LoginPage = () => {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    try {
-      // Simulate API Call
-      console.log("Form Data:", data);
-      reset();
-    } catch (error) {
-      console.error("Submission error:", error);
-    }
+    console.log(data);
+    await login(data);
   };
 
   return (

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import * as z from "zod";
 import audienceImg from "../../../assets/img/audienceImg.png";
+import { useSignup } from "../../../hooks/auth/useSignup";
 
 const SignupSchema = z
   .object({
@@ -21,7 +22,7 @@ const SignupSchema = z
 type SignupFormData = z.infer<typeof SignupSchema>;
 
 const SignupPage = () => {
-  // const {signup} = useSignup();
+  const {signup} = useSignup();
   const navigate = useNavigate();
   const [userType, setUserType] = useState<"user" | "admin">("user");
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -33,7 +34,6 @@ const SignupPage = () => {
     handleSubmit,
     clearErrors,
     formState: { errors, isSubmitting },
-    reset,
   } = useForm<SignupFormData>({
     resolver: zodResolver(SignupSchema),
     defaultValues: {
@@ -45,8 +45,9 @@ const SignupPage = () => {
   });
 
   const onSubmit = async (data: SignupFormData) => {
-    // await signup(data);
+    // Printing the data in console.log() for debugging
     console.log(data);
+    await signup(data);
   };
 
   return (
