@@ -1,5 +1,13 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
 
 body {
   background-color: black; /* Replace with your desired color */
+}
+
+.mySwiper {
+  --swiper-navigation-color: #ffffff;
+  --swiper-pagination-color: #ffffff;
 }
