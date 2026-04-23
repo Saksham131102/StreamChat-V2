@@ -18,7 +18,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 
 const AppNavbar = () => {
   return (
-    <nav className="p-4 flex items-center justify-between">
+    <nav className="p-4 px-10 flex items-center justify-between">
       {/* Logo */}
       <h1 className="text-2xl font-bold">
         <span className="text-white">Stream</span>

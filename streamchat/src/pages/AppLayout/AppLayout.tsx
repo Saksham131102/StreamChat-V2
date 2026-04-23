@@ -5,7 +5,7 @@ const AppLayout = () => {
   return (
     <div>
       <AppNavbar />
-      <main>
+      <main className="px-10">
         <Outlet />
       </main>
     </div>

@@ -15,7 +15,7 @@ const MediaCard = ({ media, onClick }: MediaCardProps) => {
     <div
       onClick={() => onClick?.(media)}
       className="group relative flex-shrink-0 w-40 sm:w-44 md:w-48 rounded-xl overflow-hidden cursor-pointer
-                 transition-transform duration-300 ease-out hover:scale-105 hover:z-10
+                 transition-transform duration-300 ease-out hover:z-10
                  shadow-md hover:shadow-2xl hover:shadow-black/60"
     >
       {/* Poster */}
@@ -54,11 +54,11 @@ const MediaCard = ({ media, onClick }: MediaCardProps) => {
       </div>
 
       {/* Trending score badge */}
-      {media.trending_score >= 90 && (
+      {/* {media.trending_score >= 90 && (
         <div className="absolute top-2 right-2 bg-red-600/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md backdrop-blur-sm">
           🔥 Hot
         </div>
-      )}
+      )} */}
     </div>
   );
 };

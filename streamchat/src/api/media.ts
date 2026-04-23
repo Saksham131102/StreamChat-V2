@@ -6,7 +6,7 @@ import type { ITrendingResponse } from '../types/media';
  * Endpoint: GET /media/trending?type=movie&limit=20
  */
 export const getTrending = (type: string, limit = 20) =>
-  apiClient.get<ITrendingResponse>('/data/trending', {
+  apiClient.get<ITrendingResponse>('/media/trending', {
     params: { type, limit },
   });
 
@@ -15,6 +15,6 @@ export const getTrending = (type: string, limit = 20) =>
  * Endpoint: GET /media/featured?limit=10
  */
 export const getFeatured = (limit = 10) =>
-  apiClient.get<ITrendingResponse>('/data/featured', {
+  apiClient.get<ITrendingResponse>('/media/featured', {
     params: { limit },
   });

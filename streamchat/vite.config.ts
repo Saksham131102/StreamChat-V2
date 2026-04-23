@@ -30,7 +30,7 @@ export default defineConfig({
         changeOrigin: true,
         ws: true, // Enable WebSockets for the chat service
       },
-      "/data": {
+      "/media": {
         target: "http://localhost",
         changeOrigin: true,
       },

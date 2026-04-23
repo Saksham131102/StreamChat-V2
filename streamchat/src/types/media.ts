@@ -23,6 +23,7 @@ export interface IMedia {
   language: string;
   release_date: string;
   created_at: string;
+  description: string;
 
   trending_score: number;
   view_count: number;
