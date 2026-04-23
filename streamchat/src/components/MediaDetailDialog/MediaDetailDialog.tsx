@@ -1,5 +1,6 @@
 
 import type { IMedia } from '@/types/media'
+import { FaUsers } from 'react-icons/fa6';
 
 function PlayIcon() {
   return (
@@ -42,7 +43,7 @@ const MediaDetailDialog = ({media}: {media: IMedia}) => {
               <PlayIcon /> Play
             </button>
             <button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-purple-600/20 cursor-pointer">
-              <PlayIcon /> Watch Party
+              <FaUsers /> Watch Party
             </button>
           </div>
         </div>
