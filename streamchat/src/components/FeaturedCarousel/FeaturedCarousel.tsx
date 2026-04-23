@@ -1,6 +1,12 @@
 import useFeatured from "@/hooks/media/useFeatured";
 import type { IMedia } from "@/types/media";
 import { useEffect, useRef, useState, useCallback, useLayoutEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import MediaDetailDialog from "../MediaDetailDialog/MediaDetailDialog";
 // useLayoutEffect is used to keep totalRef in sync without triggering loop restarts.
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -107,7 +113,7 @@ function Slide({ media, isActive }: SlideProps) {
             <span className="text-[11px] border border-red-500/40 text-red-400 px-3 py-1.5 rounded-full tracking-wide">
               {meta}
             </span>
-        )}
+          )}
         </span>
         </div>
 
@@ -137,9 +143,16 @@ function Slide({ media, isActive }: SlideProps) {
             <DownloadIcon />
           </button> */}
 
-          <button className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/20 bg-white/5 hover:bg-white/15 text-white transition-all duration-200 cursor-pointer">
-            <MoreIcon />
-          </button>
+          <Dialog>
+            <DialogTrigger>
+              <button className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/20 bg-white/5 hover:bg-white/15 text-white transition-all duration-200 cursor-pointer">
+                <MoreIcon />
+              </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl h-[85vh] p-0 bg-[#0a0a0a] text-white ring-1 ring-white/10 overflow-hidden border-none shadow-2xl">
+              <MediaDetailDialog media={media} />
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
