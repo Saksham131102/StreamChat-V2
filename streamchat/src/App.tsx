@@ -8,6 +8,7 @@ import HomePage from "./pages/AppPages/HomePage";
 import MoviesPage from "./pages/AppPages/MoviesPage";
 import SeriesPage from "./pages/AppPages/SeriesPage";
 import TvShowsPage from "./pages/AppPages/TvShowsPage";
+import WatchPage from "./pages/WatchPage/WatchPage";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="movies" element={<MoviesPage />} />
             <Route path="series" element={<SeriesPage />} />
             <Route path="tv-shows" element={<TvShowsPage />} />
+            <Route path="watch/:id" element={<WatchPage />} />
           </Route>
         </Route>
       </Routes>
