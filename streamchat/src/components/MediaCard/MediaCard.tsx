@@ -38,9 +38,11 @@ const MediaCard = ({ media, onClick }: MediaCardProps) => {
 
       {/* Info at bottom */}
       <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-        <p className="text-white text-sm font-semibold leading-tight line-clamp-2">
-          {media.title}
-        </p>
+        <div className='flex justify-start'>
+          <p className="text-white text-sm font-semibold leading-tight line-clamp-2">
+            {media.title}
+          </p>
+        </div>
         <div className="flex items-center gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           {year && (
             <span className="text-neutral-400 text-xs">{year}</span>

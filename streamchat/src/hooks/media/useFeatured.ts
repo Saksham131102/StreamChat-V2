@@ -11,7 +11,7 @@ interface UseFeaturedReturn {
 const MOCK_DATA: IMedia[] = [
   {
     _id: 'mock-1',
-    title: 'Neon Odyssey',
+    title: 'The Batman',
     type: 'movie',
     genres: ['Cyberpunk', 'Action', 'Sci-Fi'],
     language: 'en',
@@ -27,13 +27,13 @@ const MOCK_DATA: IMedia[] = [
     meta: { duration_mins: 142 },
     media_assets: {
       poster: { public_id: 'p1', url: '' }, // Assumes dragon.png is moved to public/
-      backdrop: { public_id: 'b1', url: '/mock_assets/dragon.png' },
+      backdrop: { public_id: 'b1', url: 'https://res.cloudinary.com/dyaefxz5h/image/upload/v1777301428/Backdrop_izbv85.jpg' },
       trailer: { public_id: 't1', url: '' }
     }
   },
   {
     _id: 'mock-2',
-    title: 'The Dragon\'s Reign',
+    title: 'F1: The Movie',
     type: 'movie',
     genres: ['Fantasy', 'Adventure'],
     language: 'en',
@@ -49,13 +49,13 @@ const MOCK_DATA: IMedia[] = [
     meta: { duration_mins: 165 },
     media_assets: {
       poster: { public_id: 'p2', url: '' },
-      backdrop: { public_id: 'b2', url: '/mock_assets/dragon.png' },
+      backdrop: { public_id: 'b2', url: 'https://res.cloudinary.com/dyaefxz5h/image/upload/v1777302317/Backdrop_gyknqz.jpg' },
       trailer: { public_id: 't2', url: '' }
     }
   },
   {
     _id: 'mock-3',
-    title: 'Starship Frontline',
+    title: 'Project Hail Mary',
     type: 'web_series',
     genres: ['Sci-Fi', 'War', 'Drama'],
     language: 'en',
@@ -71,7 +71,7 @@ const MOCK_DATA: IMedia[] = [
     total_seasons: 3,
     media_assets: {
       poster: { public_id: 'p3', url: '' },
-      backdrop: { public_id: 'b3', url: '/mock_assets/dragon.png' },
+      backdrop: { public_id: 'b3', url: 'https://res.cloudinary.com/dyaefxz5h/image/upload/v1777302748/Backdrop_qfh6zz.jpg' },
       trailer: { public_id: 't3', url: '' }
     }
   }
