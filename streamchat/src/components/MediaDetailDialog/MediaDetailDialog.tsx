@@ -1,6 +1,7 @@
 
 import type { IMedia } from '@/types/media'
 import { FaUsers } from 'react-icons/fa6';
+import { Link } from 'react-router-dom';
 
 function PlayIcon() {
   return (
@@ -39,9 +40,9 @@ const MediaDetailDialog = ({media}: {media: IMedia}) => {
             {media.title}
           </h2>
           <div className="flex gap-3 items-center">
-            <button className="bg-red-600 hover:bg-red-700 text-white px-8 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-red-600/20 cursor-pointer">
+            <Link to={`/browse/watch/${media._id}`} className="bg-red-600 hover:bg-red-700 text-white px-8 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-red-600/20 cursor-pointer">
               <PlayIcon /> Play
-            </button>
+            </Link>
             <button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-purple-600/20 cursor-pointer">
               <FaUsers /> Watch Party
             </button>

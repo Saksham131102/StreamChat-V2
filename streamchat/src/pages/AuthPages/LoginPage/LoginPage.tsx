@@ -10,7 +10,7 @@ import { useLogin } from "../../../hooks/auth/useLogin";
 
 // Defining validation schema
 const LoginSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
+  email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
@@ -30,7 +30,7 @@ const LoginPage = () => {
   } = useForm<LoginFormData>({
     resolver: zodResolver(LoginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
@@ -118,28 +118,28 @@ const LoginPage = () => {
 
             {/* Login Form */}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Username Field */}
+              {/* Email Field */}
               <div>
                 <label
-                  htmlFor="username"
+                  htmlFor="email"
                   className="block text-sm text-white font-medium mb-2"
                 >
-                  Username
+                  Email Address
                 </label>
                 <div className="relative">
                   <User
                     className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
-                      errors.username
+                      errors.email
                         ? "text-red-500" // Highlight icon red on error
                         : "text-gray-300"
                     }`}
                   />
                   <input
-                    id="username"
-                    type="text"
-                    {...register("username")} // Replaces name, value, and onChange
-                    onClick={() => clearErrors("username")}
-                    aria-invalid={errors.username ? "true" : "false"}
+                    id="email"
+                    type="email"
+                    {...register("email")} // Replaces name, value, and onChange
+                    onClick={() => clearErrors("email")}
+                    aria-invalid={errors.email ? "true" : "false"}
                     placeholder="Enter your email"
                     className={`w-full pl-10 pr-4 py-3 rounded-lg border bg-transparent border-gray-400 text-white placeholder-gray-300 ${
                       userType === "user"
@@ -150,9 +150,9 @@ const LoginPage = () => {
                 </div>
 
                 {/* Error Message */}
-                {errors.username && (
+                {errors.email && (
                   <p className="mt-1 text-sm text-red-500 font-medium">
-                    {errors.username.message}
+                    {errors.email.message}
                   </p>
                 )}
               </div>

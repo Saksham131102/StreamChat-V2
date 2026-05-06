@@ -9,15 +9,18 @@ import MoviesPage from "./pages/AppPages/MoviesPage";
 import SeriesPage from "./pages/AppPages/SeriesPage";
 import TvShowsPage from "./pages/AppPages/TvShowsPage";
 import WatchPage from "./pages/WatchPage/WatchPage";
+import { useAuthContext } from "./contexts/authContext";
 
 function App() {
+  const { authUser } = useAuthContext();
+
   return (
     <main>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/signin" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/" element={authUser ? <Navigate to="/browse" replace /> : <LandingPage />} />
+        <Route path="/signin" element={authUser ? <Navigate to="/browse" replace /> : <LoginPage />} />
+        <Route path="/signup" element={authUser ? <Navigate to="/browse" replace /> : <SignupPage />} />
 
         {/* Protected routes — requires auth */}
         <Route element={<ProtectedRoute />}>

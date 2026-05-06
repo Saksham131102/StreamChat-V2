@@ -44,10 +44,9 @@ const TrendingRow = ({ title, type, limit = 20, onCardClick }: TrendingRowProps)
         {isLoading
           ? Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)
           : data.map((media) => (
-              <Dialog>
+              <Dialog key={media._id}>
                 <DialogTrigger>
                   <MediaCard
-                    key={media._id}
                     media={media}
                     onClick={onCardClick}
                   /> 

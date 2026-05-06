@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { ITrendingResponse } from '../types/media';
+import type { ITrendingResponse, IMedia } from '../types/media';
 
 /**
  * Fetch trending media items by type.
@@ -18,3 +18,10 @@ export const getFeatured = (limit = 10) =>
   apiClient.get<ITrendingResponse>('/media/featured', {
     params: { limit },
   });
+
+/**
+ * Fetch a single media item by ID.
+ * Endpoint: GET /media/:id
+ */
+export const getMediaById = (id: string) =>
+  apiClient.get<{ data: IMedia }>(`/media/${id}`);

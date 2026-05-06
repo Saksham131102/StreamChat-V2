@@ -1,40 +1,98 @@
 import VideoPlayer from "@/components/VideoPlayer/VideoPlayer"
 import type { IMedia } from "@/types/media"
 import { FaUsers } from 'react-icons/fa6'
+import { useEffect, useState } from "react"
+import { useParams } from "react-router-dom"
 
-const MOCK_DATA: IMedia = {
-  _id: 'mock-1',
-  title: 'The Batman',
-  type: 'movie',
-  genres: ['Cyberpunk', 'Action', 'Sci-Fi'],
-  language: 'en',
-  release_date: '2024-12-25',
-  created_at: new Date().toISOString(),
-  trending_score: 95,
-  view_count: 1000000,
-  is_featured: true,
-  cast: ['Hero One', 'Hero Two'],
-  director: 'Visionary Director',
-  search_tags: ['neon', 'future', 'cyberpunk'],
-  description: 'In a rain-soaked metropolis of the year 2099, a rogue synthetic agent discovers a secret that could break the foundations of the digital world.',
-  meta: { duration_mins: 142 },
-  media_assets: {
-    poster: { public_id: 'p1', url: 'https://res.cloudinary.com/dvkt1djfc/image/upload/v1728037490/thumbnailWithImage_myrflh.jpg' },
-    backdrop: { public_id: 'b1', url: 'https://res.cloudinary.com/dyaefxz5h/image/upload/v1777301428/Backdrop_izbv85.jpg' },
-    trailer: { public_id: 't1', url: 'https://res.cloudinary.com/dvkt1djfc/video/upload/v1728037696/trailer_xfsfao.mp4' }
-  }
-}
+import { getMediaById } from "@/api/media"
 
-function PlayIcon() {
-  return (
-    <svg viewBox="0 0 12 14" fill="currentColor" className="w-3.5 h-3.5">
-      <path d="M1 1l10 6L1 13V1z" />
-    </svg>
-  )
-}
+// function PlayIcon() {
+//   return (
+//     <svg viewBox="0 0 12 14" fill="currentColor" className="w-3.5 h-3.5">
+//       <path d="M1 1l10 6L1 13V1z" />
+//     </svg>
+//   )
+// }
 
 const WatchPage = () => {
-  const media = MOCK_DATA;
+  const { id } = useParams();
+  const [media, setMedia] = useState<IMedia | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) return;
+    
+    let isMounted = true;
+    setIsLoading(true);
+    
+    const fetchMedia = async () => {
+      try {
+        const res = await getMediaById(id);
+        if (isMounted) {
+          setMedia(res.data.data);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error("Failed to load media:", err);
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchMedia();
+      
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="w-full min-h-screen bg-black text-white">
+        <div className="w-full max-w-[1300px] aspect-[16/9] mx-auto bg-white/10 animate-pulse rounded-xl" />
+        <div className="mx-auto max-w-[1300px] pt-8 pb-16">
+          <div className="flex items-start justify-between gap-6 flex-wrap">
+            <div className="h-12 w-2/3 max-w-[600px] bg-white/10 animate-pulse rounded-lg" />
+            <div className="h-10 w-32 bg-white/10 animate-pulse rounded-lg" />
+          </div>
+          <div className="flex items-center gap-2 mt-5">
+            <div className="h-6 w-16 bg-white/10 animate-pulse rounded" />
+            <div className="h-6 w-20 bg-white/10 animate-pulse rounded" />
+            <div className="h-6 w-24 bg-white/10 animate-pulse rounded" />
+          </div>
+          <div className="flex gap-2 mt-5">
+            <div className="h-6 w-20 bg-white/10 animate-pulse rounded-full" />
+            <div className="h-6 w-20 bg-white/10 animate-pulse rounded-full" />
+            <div className="h-6 w-20 bg-white/10 animate-pulse rounded-full" />
+          </div>
+          <hr className="border-none h-[1px] bg-white/10 my-7" />
+          <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-12 mt-1">
+            <div className="space-y-3">
+              <div className="h-4 w-24 bg-white/10 animate-pulse rounded mb-4" />
+              <div className="h-4 w-full bg-white/10 animate-pulse rounded" />
+              <div className="h-4 w-full bg-white/10 animate-pulse rounded" />
+              <div className="h-4 w-3/4 bg-white/10 animate-pulse rounded" />
+            </div>
+            <div className="space-y-4">
+              <div className="h-4 w-24 bg-white/10 animate-pulse rounded mb-4" />
+              <div className="h-4 w-full bg-white/10 animate-pulse rounded" />
+              <div className="h-4 w-full bg-white/10 animate-pulse rounded" />
+              <div className="h-4 w-full bg-white/10 animate-pulse rounded" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!media) {
+    return (
+      <div className="w-full min-h-screen bg-black flex flex-col items-center justify-center text-white gap-4">
+        <h2 className="text-2xl font-bold">Media not found</h2>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-black text-white">
@@ -56,7 +114,7 @@ const WatchPage = () => {
         </div>
       </div> */}
       <div className="w-full max-w-[1300px] aspect-[16/9] mx-auto">
-        <VideoPlayer src={media.media_assets.trailer.url} poster={media.media_assets.poster.url} />
+        <VideoPlayer src={media.media_assets.trailer.url} poster={media.media_assets.backdrop.url} />
       </div>
 
       {/* ── Movie Details ── */}

@@ -34,7 +34,7 @@ apiClient.interceptors.request.use(
     // Attempt to get the accessToken from localStorage
     const token = localStorage.getItem("accessToken");
     if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers["Authorization"] = `Bearer ${token}`;
     }
     return config;
   },
@@ -65,7 +65,7 @@ apiClient.interceptors.response.use(
           failedQueue.push({ resolve, reject });
         })
           .then((token) => {
-            originalRequest.headers.Authorization = "Bearer " + token;
+            originalRequest.headers["Authorization"] = "Bearer " + token;
             return apiClient(originalRequest);
           })
           .catch((err) => {
@@ -92,7 +92,7 @@ apiClient.interceptors.response.use(
         
         // Update the default config headers for future requests
         apiClient.defaults.headers.common["Authorization"] = "Bearer " + newAccessToken;
-        originalRequest.headers.Authorization = "Bearer " + newAccessToken;
+        originalRequest.headers["Authorization"] = "Bearer " + newAccessToken;
 
         // Resolve queued requests with the new token
         processQueue(null, newAccessToken);

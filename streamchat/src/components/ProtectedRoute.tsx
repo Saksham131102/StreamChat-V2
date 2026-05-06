@@ -4,7 +4,7 @@ import { useAuthContext } from "../contexts/authContext";
 const ProtectedRoute = () => {
   // Skip auth check during development so you can build pages without signing in.
   // import.meta.env.DEV is automatically `false` in production builds.
-  if (import.meta.env.DEV) return <Outlet />;
+  // if (import.meta.env.DEV) return <Outlet />;
 
   const { authUser, isLoading } = useAuthContext();
 
