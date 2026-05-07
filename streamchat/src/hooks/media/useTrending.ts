@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { getTrending } from '../../api/media';
 import type { IMedia } from '../../types/media';
 
@@ -9,33 +9,17 @@ interface UseTrendingReturn {
 }
 
 const useTrending = (type: string, limit = 20): UseTrendingReturn => {
-  const [data, setData] = useState<IMedia[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const query = useQuery({
+    queryKey: ['trending', type, limit],
+    queryFn: () => getTrending(type, limit),
+    select: (res) => res.data.data,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-
-    setIsLoading(true);
-    setError(null);
-
-    getTrending(type, limit)
-      .then((res) => {
-        if (!cancelled) setData(res.data.data);
-      })
-      .catch(() => {
-        if (!cancelled) setError('Failed to load trending content.');
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [type, limit]);
-
-  return { data, isLoading, error };
+  return {
+    data: query.data ?? [],
+    isLoading: query.isLoading,
+    error: query.error ? 'Failed to load trending content.' : null
+  }
 };
 
 export default useTrending;
