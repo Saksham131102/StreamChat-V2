@@ -18,20 +18,20 @@ const AUTOPLAY_DURATION = 5000;
 
 function SkeletonSlide() {
   return (
-    <div className="relative w-full aspect-[21/9] bg-[#0f0e1a] animate-pulse rounded-2xl overflow-hidden">
+    <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] bg-[#0f0e1a] animate-pulse rounded-2xl overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent" />
-      <div className="absolute bottom-0 left-0 p-10 space-y-3 w-1/2">
+      <div className="absolute bottom-0 left-0 p-5 sm:p-8 md:p-10 space-y-3 w-3/4 sm:w-2/3 md:w-1/2">
         <div className="h-4 w-24 bg-white/10 rounded-full" />
         <div className="flex gap-2">
           <div className="h-5 w-16 bg-white/10 rounded-full" />
           <div className="h-5 w-16 bg-white/10 rounded-full" />
         </div>
-        <div className="h-10 w-72 bg-white/10 rounded-lg" />
-        <div className="h-4 w-80 bg-white/[0.07] rounded" />
-        <div className="h-4 w-64 bg-white/[0.07] rounded" />
+        <div className="h-8 sm:h-10 w-48 sm:w-72 bg-white/10 rounded-lg" />
+        <div className="hidden sm:block h-4 w-80 bg-white/[0.07] rounded" />
+        <div className="hidden sm:block h-4 w-64 bg-white/[0.07] rounded" />
         <div className="flex gap-3 pt-2">
-          <div className="h-10 w-32 bg-white/10 rounded-xl" />
-          <div className="h-10 w-10 bg-white/10 rounded-xl" />
+          <div className="h-9 sm:h-10 w-28 sm:w-32 bg-white/10 rounded-xl" />
+          <div className="h-9 sm:h-10 w-9 sm:w-10 bg-white/10 rounded-xl" />
         </div>
       </div>
     </div>
@@ -59,7 +59,7 @@ function Slide({ media, isActive }: SlideProps) {
       : null;
 
   return (
-    <div className="relative min-w-full aspect-[21/9] overflow-hidden">
+    <div className="relative min-w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] overflow-hidden">
       {/* Backdrop */}
       <img
         src={media.media_assets.backdrop.url || "/placeholder-backdrop.jpg"}
@@ -74,14 +74,14 @@ function Slide({ media, isActive }: SlideProps) {
       <div className="absolute inset-0 bg-gradient-to-t from-[#080714]/60 via-transparent to-transparent" />
 
       {/* Content */}
-      <div className="absolute bottom-0 left-0 p-9 max-w-[58%] space-y-3">
+      <div className="absolute bottom-0 left-0 p-5 sm:p-7 md:p-9 max-w-[80%] sm:max-w-[65%] md:max-w-[58%] space-y-2 sm:space-y-3">
         {/* Badge */}
         {/* <span className="inline-flex items-center gap-1.5 text-[11px] font-medium tracking-widest uppercase bg-white/10 border border-white/20 backdrop-blur-sm text-white px-3 py-1.5 rounded-full">
           {badge}
         </span> */}
 
         {/* Genres */}
-        <div className="flex flex-wrap gap-2">
+        <div className="hidden sm:flex flex-wrap gap-2">
           {media.genres.slice(0, 3).map((g) => (
             <span
               key={g}
@@ -90,19 +90,14 @@ function Slide({ media, isActive }: SlideProps) {
               {g}
             </span>
           ))}
-          {/* {meta && (
-            <span className="text-[11px] border border-red-500/40 text-red-400 px-3 py-1 rounded-full tracking-wide">
-              {meta}
-            </span>
-          )} */}
         </div>
 
         {/* Title */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1 sm:gap-2">
           <h2
           className={[
             "font-black text-white leading-none tracking-tight transition-all duration-500 delay-200",
-            "text-4xl sm:text-5xl",
+            "text-2xl sm:text-4xl md:text-5xl",
             "[font-family:'Bebas_Neue',sans-serif]",
             isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
           ].join(" ")}
@@ -118,10 +113,10 @@ function Slide({ media, isActive }: SlideProps) {
         </span>
         </div>
 
-        {/* Description */}
+        {/* Description — hidden on mobile */}
         <p
           className={[
-            "text-[13px] text-white/60 leading-relaxed font-light line-clamp-2 transition-all duration-500 delay-300",
+            "hidden sm:block text-[13px] text-white/60 leading-relaxed font-light line-clamp-2 transition-all duration-500 delay-300",
             isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
           ].join(" ")}
         >
@@ -131,11 +126,11 @@ function Slide({ media, isActive }: SlideProps) {
         {/* Actions */}
         <div
           className={[
-            "flex items-center gap-3 pt-1 transition-all duration-500 delay-[450ms]",
+            "flex items-center gap-2 sm:gap-3 pt-1 transition-all duration-500 delay-[450ms]",
             isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
           ].join(" ")}
         >
-          <Link to={`/browse/watch/${media._id}`} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 active:scale-95 text-white text-sm font-medium px-5 py-3 rounded-xl transition-all duration-200 cursor-pointer">
+          <Link to={`/browse/watch/${media._id}`} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 active:scale-95 text-white text-xs sm:text-sm font-medium px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl transition-all duration-200 cursor-pointer">
             <PlayIcon />
             Watch Now
           </Link>

@@ -50,24 +50,24 @@ const WatchPage = () => {
   if (isLoading) {
     return (
       <div className="w-full min-h-screen bg-black text-white">
-        <div className="w-full max-w-[1300px] aspect-[16/9] mx-auto bg-white/10 animate-pulse rounded-xl" />
-        <div className="mx-auto max-w-[1300px] pt-8 pb-16">
-          <div className="flex items-start justify-between gap-6 flex-wrap">
-            <div className="h-12 w-2/3 max-w-[600px] bg-white/10 animate-pulse rounded-lg" />
-            <div className="h-10 w-32 bg-white/10 animate-pulse rounded-lg" />
+        <div className="w-full max-w-[1300px] aspect-[16/9] mx-auto bg-white/10 animate-pulse" />
+        <div className="mx-auto max-w-[1300px] px-4 sm:px-6 lg:px-0 pt-6 sm:pt-8 pb-16">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="h-8 sm:h-12 w-2/3 max-w-[600px] bg-white/10 animate-pulse rounded-lg" />
+            <div className="h-9 sm:h-10 w-28 sm:w-32 bg-white/10 animate-pulse rounded-lg" />
           </div>
-          <div className="flex items-center gap-2 mt-5">
+          <div className="flex items-center gap-2 mt-4 sm:mt-5">
             <div className="h-6 w-16 bg-white/10 animate-pulse rounded" />
             <div className="h-6 w-20 bg-white/10 animate-pulse rounded" />
             <div className="h-6 w-24 bg-white/10 animate-pulse rounded" />
           </div>
-          <div className="flex gap-2 mt-5">
+          <div className="flex gap-2 mt-4 sm:mt-5">
             <div className="h-6 w-20 bg-white/10 animate-pulse rounded-full" />
             <div className="h-6 w-20 bg-white/10 animate-pulse rounded-full" />
             <div className="h-6 w-20 bg-white/10 animate-pulse rounded-full" />
           </div>
-          <hr className="border-none h-[1px] bg-white/10 my-7" />
-          <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-12 mt-1">
+          <hr className="border-none h-[1px] bg-white/10 my-6 sm:my-7" />
+          <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-8 md:gap-12 mt-1">
             <div className="space-y-3">
               <div className="h-4 w-24 bg-white/10 animate-pulse rounded mb-4" />
               <div className="h-4 w-full bg-white/10 animate-pulse rounded" />
@@ -118,15 +118,12 @@ const WatchPage = () => {
       </div>
 
       {/* ── Movie Details ── */}
-      <div className="mx-auto max-w-[1300px] pt-8 pb-16">
+      <div className="mx-auto max-w-[1300px] px-4 sm:px-6 lg:px-0 pt-6 sm:pt-8 pb-16">
         {/* Title + Action Buttons */}
-        <div className="flex items-start justify-between gap-6 flex-wrap">
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-tight m-0">{media.title}</h1>
-          <div className="flex gap-3 items-center flex-shrink-0">
-            {/* <button className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm bg-red-600 shadow-[0_4px_20px_rgba(220,38,38,0.25)] hover:bg-red-700 transition-all active:scale-95 text-white cursor-pointer">
-              <PlayIcon /> Play
-            </button> */}
-            <button className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm bg-purple-600 shadow-[0_4px_20px_rgba(124,58,237,0.25)] hover:bg-purple-700 transition-all active:scale-95 text-white cursor-pointer">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight leading-tight m-0">{media.title}</h1>
+          <div className="flex gap-2 sm:gap-3 items-center flex-shrink-0">
+            <button className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm bg-purple-600 shadow-[0_4px_20px_rgba(124,58,237,0.25)] hover:bg-purple-700 transition-all active:scale-95 text-white cursor-pointer">
               <FaUsers /> Watch Party
             </button>
           </div>
@@ -167,10 +164,10 @@ const WatchPage = () => {
           ))}
         </div>
 
-        <hr className="border-none h-[1px] bg-white/15 my-7" />
+        <hr className="border-none h-[1px] bg-white/15 my-6 sm:my-7" />
 
         {/* Content: Description + Sidebar Info */}
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-12 mt-1">
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-8 md:gap-12 mt-1">
           {/* Left – Description */}
           <div>
             <h3 className="text-[13px] font-semibold uppercase tracking-[0.1em] text-white/40 mb-3">Synopsis</h3>
@@ -224,9 +221,9 @@ const WatchPage = () => {
         {/* Seasons Summary (web_series / tv) */}
         {media.seasons_summary && media.seasons_summary.length > 0 && (
           <div className="mt-8">
-            <hr className="border-none h-[1px] bg-white/5 my-7" />
+            <hr className="border-none h-[1px] bg-white/5 my-6 sm:my-7" />
             <h3 className="text-[13px] font-semibold uppercase tracking-[0.1em] text-white/40 mb-3">Seasons</h3>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3 mt-3.5">
+            <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3 mt-3.5">
               {media.seasons_summary.map((season) => (
                 <div key={season.season_no} className="bg-white/5 border border-white/10 rounded-xl p-4 text-center transition-all duration-200 hover:bg-white/10 hover:border-red-600/30">
                   <div className="text-base font-bold text-white">Season {season.season_no}</div>
