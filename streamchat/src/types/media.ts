@@ -64,7 +64,3 @@ export interface IEpisode {
     stream: IStreamAsset;
   };
 }
-
-export interface ITrendingResponse {
-  data: IMedia[];
-}

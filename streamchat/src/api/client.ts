@@ -94,18 +94,20 @@ apiClient.interceptors.response.use(
         apiClient.defaults.headers.common["Authorization"] = "Bearer " + newAccessToken;
         originalRequest.headers["Authorization"] = "Bearer " + newAccessToken;
 
-        // Resolve queued requests with the new token
+        // Resolving queued requests with the new token
         processQueue(null, newAccessToken);
         
-        // Retry original request
+        // Retrying original request
         return apiClient(originalRequest);
       } catch (refreshError) {
         // If refreshing fails (e.g. refresh token is also expired),
-        // reject queued requests, clear localStorage, and optionally redirect to login
+        // rejecting queued requests, clearing localStorage, and redirecting to login
         processQueue(refreshError, null);
         localStorage.removeItem("accessToken");
         localStorage.removeItem("user");
-        // E.g., window.location.href = "/signin";
+        
+        // redirect to login page
+        window.location.href = "/signin";
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

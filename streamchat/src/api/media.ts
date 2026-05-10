@@ -1,27 +1,18 @@
 import { apiClient } from './client';
-import type { ITrendingResponse, IMedia } from '../types/media';
+import type { IMedia } from '../types/media';
 
-/**
- * Fetch trending media items by type.
- * Endpoint: GET /media/trending?type=movie&limit=20
- */
+// API to get trending media items by type (movies, web_series, tv)
 export const getTrending = (type: string, limit = 20) =>
-  apiClient.get<ITrendingResponse>('/media/trending', {
+  apiClient.get<{ data: IMedia[] }>('/media/trending', {
     params: { type, limit },
   });
 
-/**
- * Fetch featured media items for the hero carousel.
- * Endpoint: GET /media/featured?limit=10
- */
+// API to get featured media items for the hero carousel
 export const getFeatured = (limit = 10) =>
-  apiClient.get<ITrendingResponse>('/media/featured', {
+  apiClient.get<{ data: IMedia[] }>('/media/featured', {
     params: { limit },
   });
 
-/**
- * Fetch a single media item by ID.
- * Endpoint: GET /media/:id
- */
+// API to get media item by ID
 export const getMediaById = (id: string) =>
   apiClient.get<{ data: IMedia }>(`/media/${id}`);

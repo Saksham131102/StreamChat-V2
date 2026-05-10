@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { apiClient } from "../../api/client";
 import { useAuthContext } from "../../contexts/authContext";
 import type { ILogin } from "../../types/ILogin";
+import { loginAPI } from "@/api/auth";
 
 export const useLogin = () => {
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +17,7 @@ export const useLogin = () => {
     }
 
     try {
-      const response = await apiClient.post("/auth/login", data);
+      const response = await loginAPI(data);
       const resData = response.data;
 
       // Extract the token and the user information

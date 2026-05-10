@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { LogOut } from "lucide-react";
+import { useAuthContext } from "@/contexts/authContext";
+import { useLogout } from "@/hooks/auth/useLogout";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   isActive
@@ -17,6 +19,10 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     : "";
 
 const AppNavbar = () => {
+
+  const {authUser} = useAuthContext();
+  const {logout, isLoading, error} = useLogout();
+
   return (
     <nav className="p-4 px-10 flex items-center justify-between">
       {/* Logo */}
@@ -37,22 +43,22 @@ const AppNavbar = () => {
       <DropdownMenu>
         <DropdownMenuTrigger className="rounded-full cursor-pointer outline-none">
           <Avatar className="size-8">
-            <AvatarImage src="https://github.com/shadcn.png" />
-            <AvatarFallback>CN</AvatarFallback>
+            <AvatarImage src={authUser?.profilePic} />
+            <AvatarFallback>{authUser?.username[0].toUpperCase()}</AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="bg-black text-white border-gray-400 border ring-0" align="end">
           <DropdownMenuGroup>
-            <DropdownMenuLabel>John Doe</DropdownMenuLabel>
+            <DropdownMenuLabel>{authUser?.username}</DropdownMenuLabel>
             <DropdownMenuItem>Profile</DropdownMenuItem>
             {/* <DropdownMenuItem>Billing</DropdownMenuItem> */}
             <DropdownMenuItem>Settings</DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator className="bg-gray-400" />
           <DropdownMenuItem>GitHub</DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer">
+          <DropdownMenuItem onClick={logout} disabled={isLoading} className="cursor-pointer">
             <LogOut className="h-4 w-4" />
-            Logout
+            {isLoading ? "Logging out..." : "Logout"}
           </DropdownMenuItem>
           {/* <DropdownMenuItem>Support</DropdownMenuItem> */}
           {/* <DropdownMenuItem disabled>API</DropdownMenuItem> */}

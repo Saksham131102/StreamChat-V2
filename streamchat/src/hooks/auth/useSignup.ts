@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { apiClient } from "../../api/client";
 import { useAuthContext } from "../../contexts/authContext";
 import type { ISignup } from "../../types/ISignup";
+import { signupAPI } from "@/api/auth";
 
 
 export const useSignup = () => {
@@ -28,7 +28,7 @@ export const useSignup = () => {
     }
 
     try {
-      const response = await apiClient.post("/auth/signup", data);
+      const response = await signupAPI(data);
       const resData = response.data;
 
       // Extract the token and the user information
