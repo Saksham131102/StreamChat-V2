@@ -21,7 +21,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 const AppNavbar = () => {
 
   const {authUser} = useAuthContext();
-  const {logout, isLoading, error} = useLogout();
+  const {logout, isLoading} = useLogout();
 
   return (
     <nav className="p-4 px-10 flex items-center justify-between">
