@@ -1,5 +1,7 @@
 import { apiClient } from './client';
-import type { IMedia } from '../types/media';
+import type {
+  IMedia,
+} from '../types/media';
 
 // API to get trending media items by type (movies, web_series, tv)
 export const getTrending = (type: string, limit = 20) =>

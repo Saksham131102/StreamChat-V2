@@ -1,6 +1,7 @@
 import type { IMedia } from '@/types/media'
-import { FaUsers } from 'react-icons/fa6';
+// import { FaUsers } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
+import WatchPartyButton from '../WatchPartyButton/WatchPartyButton';
 
 function PlayIcon() {
   return (
@@ -45,9 +46,10 @@ const MediaDetailDialog = ({media}: {media: IMedia}) => {
             >
               <PlayIcon /> Play
             </Link>
-            <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 sm:px-8 py-2 sm:py-2.5 text-xs sm:text-sm rounded-lg font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-purple-600/20 cursor-pointer">
+            <WatchPartyButton mediaId={media._id} />
+            {/* <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 sm:px-8 py-2 sm:py-2.5 text-xs sm:text-sm rounded-lg font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-purple-600/20 cursor-pointer">
               <FaUsers /> Watch Party
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

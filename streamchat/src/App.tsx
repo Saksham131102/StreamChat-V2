@@ -10,6 +10,7 @@ import SeriesPage from "./pages/AppPages/SeriesPage";
 import TvShowsPage from "./pages/AppPages/TvShowsPage";
 import WatchPage from "./pages/WatchPage/WatchPage";
 import { useAuthContext } from "./contexts/authContext";
+import RoomPage from "./pages/RoomPage/RoomPage";
 
 function App() {
   const { authUser } = useAuthContext();
@@ -32,6 +33,7 @@ function App() {
             <Route path="series" element={<SeriesPage />} />
             <Route path="tv-shows" element={<TvShowsPage />} />
             <Route path="watch/:id" element={<WatchPage />} />
+            <Route path="rooms/:id" element={<RoomPage />} />
           </Route>
         </Route>
       </Routes>
