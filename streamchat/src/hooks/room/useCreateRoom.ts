@@ -1,4 +1,4 @@
-import { createRoomAPI } from "@/api/room";
+import { createRoomAPI, type ICreateRoomPayload } from "@/api/room";
 import axios from "axios";
 import { useState } from "react";
 
@@ -6,13 +6,13 @@ const useCreateRoom = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const createRoom = async (mediaId: string): Promise<string | undefined> => {
+  const createRoom = async (payload: ICreateRoomPayload): Promise<string | undefined> => {
     try {
       setLoading(true);
       setError(null);
-      const response = await createRoomAPI(mediaId);
-      if(response.data.success){
-        return response.data.roomId;
+      const response = await createRoomAPI(payload);
+      if (response.data.status === "success") {
+        return response.data.data?.roomId;
       }
       setError(response.data.message);
     } catch (err: unknown) {

@@ -1,6 +1,7 @@
 import VideoPlayer from "@/components/VideoPlayer/VideoPlayer"
 import type { IMedia } from "@/types/media"
-import { FaUsers } from 'react-icons/fa6'
+// import { FaUsers } from 'react-icons/fa6'
+import WatchPartyButton from "@/components/WatchPartyButton/WatchPartyButton"
 import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
 
@@ -123,9 +124,7 @@ const WatchPage = () => {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight leading-tight m-0">{media.title}</h1>
           <div className="flex gap-2 sm:gap-3 items-center flex-shrink-0">
-            <button className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm bg-purple-600 shadow-[0_4px_20px_rgba(124,58,237,0.25)] hover:bg-purple-700 transition-all active:scale-95 text-white cursor-pointer">
-              <FaUsers /> Watch Party
-            </button>
+            <WatchPartyButton mediaId={media._id} />
           </div>
         </div>
 

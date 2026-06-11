@@ -1,5 +1,7 @@
 export interface ICreateRoomResponse {
-  success: boolean;
+  status: string;
   message: string;
-  roomId: string;
+  data?: {
+    roomId: string;
+  }
 }

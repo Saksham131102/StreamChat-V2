@@ -34,14 +34,19 @@ export const useSignup = () => {
       // Extract the token and the user information
       const { accessToken, ...userData } = resData;
 
+      const mappedUser = {
+        _id: userData.id || userData._id,
+        ...userData
+      };
+
       // Persist the token
       localStorage.setItem("accessToken", accessToken);
 
       // Persist the user state (excluding access token based on our context logic)
-      localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("user", JSON.stringify(mappedUser));
       
       // Update global context
-      setAuthUser(userData);
+      setAuthUser(mappedUser);
 
       return true;
     } catch (err: any) {

@@ -34,6 +34,10 @@ export default defineConfig({
         target: "http://localhost",
         changeOrigin: true,
       },
+      "/rooms": {
+        target: "http://localhost",
+        changeOrigin: true,
+      },
     },
   },
 })

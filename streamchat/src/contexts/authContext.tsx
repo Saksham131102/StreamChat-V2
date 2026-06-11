@@ -16,7 +16,11 @@ export const AuthContextProvider = ({
     try {
       const user = localStorage.getItem("user");
       if (user) {
-        setAuthUser(JSON.parse(user));
+        const parsedUser = JSON.parse(user);
+        if (parsedUser && parsedUser.id && !parsedUser._id) {
+          parsedUser._id = parsedUser.id;
+        }
+        setAuthUser(parsedUser);
       }
     } catch (error) {
       console.error("Failed to parse auth user: ", error);
