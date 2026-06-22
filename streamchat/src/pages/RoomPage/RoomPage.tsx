@@ -5,7 +5,7 @@ import {
   useParams
 } from "react-router-dom";
 import { getMediaById } from "@/api/media";
-import { getRoomByIdAPI } from "@/api/room";
+import { getRoomByIdAPI, joinRoomAPI } from "@/api/room";
 import { useAuthContext } from "@/contexts/authContext";
 import { RoomMembersDialog } from "@/components/RoomMembersDialog/RoomMembersDialog";
 import { RoomChat } from "@/components/RoomChat/RoomChat";
@@ -37,6 +37,13 @@ export default function RoomPage() {
   // Testing/Demo Role toggle so user can easily test Host vs Viewer experience
   const [testingRole, setTestingRole] = useState<"host" | "viewer">("viewer");
 
+  // Private room joining state
+  const [isPasswordRequired, setIsPasswordRequired] = useState(false);
+  const [roomPassword, setRoomPassword] = useState("");
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const [joining, setJoining] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -44,6 +51,7 @@ export default function RoomPage() {
       try {
         setLoading(true);
         setError(null);
+        setIsPasswordRequired(false);
 
         if (!roomId) {
           throw new Error("Room ID is required");
@@ -124,7 +132,11 @@ export default function RoomPage() {
       } catch (err: any) {
         console.error("Initialization error:", err);
         if (isMounted) {
-          setError(err.message || "Failed to initialize watch party room.");
+          if (err.response?.status === 403 || err.response?.data?.message === "Password required") {
+            setIsPasswordRequired(true);
+          } else {
+            setError(err.response?.data?.message || err.message || "Failed to initialize watch party room.");
+          }
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -136,7 +148,28 @@ export default function RoomPage() {
     return () => {
       isMounted = false;
     };
-  }, [roomId, authUser]);
+  }, [roomId, authUser, refreshKey]);
+
+  const handleJoinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!roomId) return;
+    try {
+      setJoining(true);
+      setJoinError(null);
+      const res = await joinRoomAPI(roomId, roomPassword);
+      if (res.data.status === "success") {
+        setIsPasswordRequired(false);
+        setRoomPassword("");
+        setRefreshKey((prev) => prev + 1);
+      } else {
+        setJoinError(res.data.message || "Failed to join room.");
+      }
+    } catch (err: any) {
+      setJoinError(err.response?.data?.message || err.message || "Incorrect password. Please try again.");
+    } finally {
+      setJoining(false);
+    }
+  };
 
   const handleLeaveRoom = () => {
     // Navigate back to home dashboard
@@ -157,6 +190,57 @@ export default function RoomPage() {
           <div className="w-10 h-10 rounded-full border-b-2 border-l-2 border-red-500 animate-spin absolute top-3 left-3" />
         </div>
         <p className="text-neutral-400 font-semibold animate-pulse tracking-wide">Syncing Room Session...</p>
+      </div>
+    );
+  }
+
+  if (isPasswordRequired) {
+    return (
+      <div className="w-full h-[90vh] bg-black text-white flex flex-col items-center justify-center p-6">
+        <div className="max-w-md w-full bg-[#0d0d0d]/90 backdrop-blur-md border border-neutral-800 p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-6">
+          <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500">
+            <Lock size={32} />
+          </div>
+          <div className="text-center space-y-1">
+            <h2 className="text-xl font-bold tracking-tight">Private Watch Party</h2>
+            <p className="text-xs text-neutral-500">This watch party is private and requires a password to join.</p>
+          </div>
+
+          <form onSubmit={handleJoinSubmit} className="w-full space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs text-neutral-400 font-semibold uppercase tracking-wider">Password</label>
+              <input
+                type="password"
+                required
+                value={roomPassword}
+                onChange={(e) => setRoomPassword(e.target.value)}
+                placeholder="Enter room password"
+                className="w-full px-4 py-3 rounded-xl bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-600 focus:outline-none focus:border-purple-500 transition-colors"
+              />
+            </div>
+
+            {joinError && (
+              <p className="text-red-500 text-xs font-semibold bg-red-500/5 border border-red-500/15 p-3 rounded-lg text-center">
+                {joinError}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={joining}
+              className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {joining ? "Joining Party..." : "Enter Room"}
+            </button>
+          </form>
+
+          <button
+            onClick={handleLeaveRoom}
+            className="text-xs text-neutral-500 hover:text-neutral-400 transition-colors cursor-pointer font-medium"
+          >
+            Cancel and Return
+          </button>
+        </div>
       </div>
     );
   }

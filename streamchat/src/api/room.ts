@@ -13,3 +13,6 @@ export const createRoomAPI = (payload: ICreateRoomPayload) =>
 
 export const getRoomByIdAPI = (roomId: string) =>
   apiClient.post<any>('/rooms/get', { roomId });
+
+export const joinRoomAPI = (roomId: string, password?: string) =>
+  apiClient.post<any>('/rooms/join', { roomId, password });

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useAuthContext } from "@/contexts/authContext";
 import type { IChatMessage } from "@/types/IRoom";
-import { MessageSquare, Send, Sparkles } from "lucide-react";
+import { getSocket, disconnectSocket } from "@/lib/socket";
+import { MessageSquare, Send, Sparkles, Wifi, WifiOff } from "lucide-react";
 
 interface RoomChatProps {
   roomId: string;
@@ -12,78 +13,110 @@ export function RoomChat({ roomId, mediaTitle }: RoomChatProps) {
   const { authUser } = useAuthContext();
   const [messages, setMessages] = useState<IChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Initialize messages once when mediaTitle is loaded
-  useEffect(() => {
-    setMessages([
-      {
-        _id: "msg-1",
-        userId: "system",
-        username: "System",
-        message: `Welcome to the watch party for "${mediaTitle || "Movie"}"!🍿`,
-        timestamp: new Date(Date.now() - 600000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-      {
-        _id: "msg-2",
-        userId: "user-2",
-        username: "alex_jones",
-        message: "Hey guys! Thanks for setting this up. Ready for the movie!",
-        timestamp: new Date(Date.now() - 300000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-      {
-        _id: "msg-3",
-        userId: "user-3",
-        username: "movie_critic99",
-        message: "Trailer looks insane. Glad we are watching this one.",
-        timestamp: new Date(Date.now() - 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-    ]);
-  }, [roomId, mediaTitle]);
+  const socketRef = useRef<ReturnType<typeof getSocket> | null>(null);
 
   // Scroll chat to bottom on new message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
+  // Socket.IO setup
+  useEffect(() => {
+    if (!authUser?._id || !authUser?.username) return;
 
-    const newMessage: IChatMessage = {
-      _id: `msg-${Date.now()}`,
-      userId: authUser?._id || "current-user-id",
-      username: authUser?.username || "You",
-      message: chatInput.trim(),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    const socket = getSocket(authUser._id, authUser.username);
+    socketRef.current = socket;
+
+    // ── Event handlers ──────────────────────────────────────────────────────
+
+    const handleConnect = () => {
+      setIsConnected(true);
+      // Join the room immediately after connecting
+      socket.emit("join_room", { roomId });
+      // Welcome system message
+      setMessages([
+        {
+          _id: `system-${Date.now()}`,
+          userId: "system",
+          username: "System",
+          message: `Welcome to the watch party for "${mediaTitle || "Movie"}"! 🍿`,
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
+      ]);
     };
 
-    setMessages((prev) => [...prev, newMessage]);
-    setChatInput("");
+    const handleDisconnect = () => {
+      setIsConnected(false);
+    };
 
-    // Simulate automated mock replies after a short delay
-    setTimeout(() => {
-      const responses = [
-        "omg that scene was crazy!",
-        "haha true!",
-        "Wait, watch that detail on screen 👀",
-        "The background score is incredibly dramatic here.",
-        "absolutely loving this watch party feature!",
-      ];
-      const randomUser = ["alex_jones", "movie_critic99", "emma_watson"][Math.floor(Math.random() * 3)];
-      const randomMsg = responses[Math.floor(Math.random() * responses.length)];
-
-      const mockReply: IChatMessage = {
-        _id: `msg-reply-${Date.now()}`,
-        userId: `user-reply-${Math.random()}`,
-        username: randomUser,
-        message: randomMsg,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    const handleNewMessage = (msg: {
+      _id: string;
+      userId: string;
+      username: string;
+      message: string;
+      timestamp: string;
+    }) => {
+      const chatMsg: IChatMessage = {
+        _id: msg._id,
+        userId: msg.userId,
+        username: msg.username,
+        message: msg.message,
+        timestamp: new Date(msg.timestamp).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       };
+      setMessages((prev) => [...prev, chatMsg]);
+    };
 
-      setMessages((prev) => [...prev, mockReply]);
-    }, 2500);
-  };
+    const handleError = (err: { message: string }) => {
+      console.error("[Socket] Error:", err.message);
+    };
+
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("new_message", handleNewMessage);
+    socket.on("error", handleError);
+
+    // Connect if not already
+    if (!socket.connected) {
+      socket.connect();
+    } else {
+      // Already connected from a previous mount — rejoin room
+      socket.emit("join_room", { roomId });
+      setIsConnected(true);
+    }
+
+    return () => {
+      socket.emit("leave_room", { roomId });
+      socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("new_message", handleNewMessage);
+      socket.off("error", handleError);
+      disconnectSocket();
+    };
+  }, [authUser?._id, authUser?.username, roomId, mediaTitle]);
+
+  const handleSendMessage = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      const trimmed = chatInput.trim();
+      if (!trimmed || !socketRef.current?.connected) return;
+
+      socketRef.current.emit("send_message", {
+        roomId,
+        message: trimmed,
+      });
+
+      setChatInput("");
+    },
+    [chatInput, roomId]
+  );
 
   return (
     <div className="bg-[#070707] border border-neutral-900 rounded-2xl h-[560px] lg:h-[calc(100vh-220px)] min-h-[500px] flex flex-col overflow-hidden shadow-2xl relative">
@@ -91,18 +124,42 @@ export function RoomChat({ roomId, mediaTitle }: RoomChatProps) {
       <div className="px-5 py-4 border-b border-neutral-900 bg-neutral-950 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <MessageSquare className="text-purple-500" size={18} />
-          <span className="font-bold text-sm text-neutral-200 tracking-tight">Live Discussion</span>
+          <span className="font-bold text-sm text-neutral-200 tracking-tight">
+            Live Discussion
+          </span>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-neutral-500">
-          <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
-          <span>{messages.filter((m) => m.userId !== "system").length} messages</span>
+        <div className="flex items-center gap-3">
+          {/* Connection status badge */}
+          <div
+            className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border transition-all duration-300 ${
+              isConnected
+                ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+                : "text-neutral-500 bg-neutral-900/60 border-neutral-800/60"
+            }`}
+          >
+            {isConnected ? (
+              <>
+                <Wifi size={11} />
+                <span>Live</span>
+              </>
+            ) : (
+              <>
+                <WifiOff size={11} />
+                <span>Connecting…</span>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-neutral-500">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+            <span>{messages.filter((m) => m.userId !== "system").length} messages</span>
+          </div>
         </div>
       </div>
 
       {/* Chat Feed */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3.5 scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent">
         {messages.map((msg) => {
-          const isMe = msg.userId === (authUser?._id || "current-user-id");
+          const isMe = msg.userId === authUser?._id;
           const isSystem = msg.userId === "system";
 
           if (isSystem) {
@@ -142,7 +199,9 @@ export function RoomChat({ roomId, mediaTitle }: RoomChatProps) {
                     : "bg-neutral-900 border border-neutral-800/80 text-neutral-200 rounded-tl-none shadow-black/10"
                 }`}
               >
-                <p className="m-0 break-words font-normal whitespace-pre-wrap">{msg.message}</p>
+                <p className="m-0 break-words font-normal whitespace-pre-wrap">
+                  {msg.message}
+                </p>
               </div>
 
               {/* Time Badge */}
@@ -164,13 +223,14 @@ export function RoomChat({ roomId, mediaTitle }: RoomChatProps) {
           type="text"
           value={chatInput}
           onChange={(e) => setChatInput(e.target.value)}
-          placeholder="React to the movie..."
-          className="flex-1 bg-neutral-900/60 hover:bg-neutral-900/90 focus:bg-neutral-900 border border-neutral-800/80 focus:border-purple-600/50 rounded-xl px-4 py-3 text-xs sm:text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none transition-all duration-200"
+          placeholder={isConnected ? "React to the movie…" : "Connecting to chat…"}
+          disabled={!isConnected}
+          className="flex-1 bg-neutral-900/60 hover:bg-neutral-900/90 focus:bg-neutral-900 border border-neutral-800/80 focus:border-purple-600/50 rounded-xl px-4 py-3 text-xs sm:text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
         />
         <button
           type="submit"
-          disabled={!chatInput.trim()}
-          className="h-10 w-10 flex items-center justify-center bg-purple-600 hover:bg-purple-700 disabled:bg-neutral-900 text-white disabled:text-neutral-600 rounded-xl transition-all duration-200 cursor-pointer active:scale-95 shadow-lg shadow-purple-900/10"
+          disabled={!chatInput.trim() || !isConnected}
+          className="h-10 w-10 flex items-center justify-center bg-purple-600 hover:bg-purple-700 disabled:bg-neutral-900 text-white disabled:text-neutral-600 rounded-xl transition-all duration-200 cursor-pointer active:scale-95 shadow-lg shadow-purple-900/10 disabled:cursor-not-allowed"
         >
           <Send size={15} />
         </button>
