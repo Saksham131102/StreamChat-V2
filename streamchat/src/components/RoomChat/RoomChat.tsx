@@ -2,20 +2,49 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useAuthContext } from "@/contexts/authContext";
 import type { IChatMessage } from "@/types/IRoom";
 import { getSocket, disconnectSocket } from "@/lib/socket";
+import { fetchRoomMessagesAPI } from "@/api/chat";
 import { MessageSquare, Send, Sparkles, Wifi, WifiOff } from "lucide-react";
 
 interface RoomChatProps {
   roomId: string;
   mediaTitle: string;
+  onUserJoined?: (user: { userId: string; username: string }) => void;
+  onUserLeft?: (user: { userId: string }) => void;
 }
 
-export function RoomChat({ roomId, mediaTitle }: RoomChatProps) {
+export function RoomChat({ roomId, mediaTitle, onUserJoined, onUserLeft }: RoomChatProps) {
   const { authUser } = useAuthContext();
   const [messages, setMessages] = useState<IChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<ReturnType<typeof getSocket> | null>(null);
+
+  // ── Load chat history on mount ───────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    async function loadHistory() {
+      try {
+        const res = await fetchRoomMessagesAPI(roomId);
+        if (cancelled) return;
+        const history: IChatMessage[] = res.data.data.messages.map((m) => ({
+          _id: m._id,
+          userId: m.userId,
+          username: m.username,
+          message: m.message,
+          timestamp: new Date(m.timestamp).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        }));
+        setMessages(history);
+      } catch (err) {
+        console.error("[Chat] Failed to load history:", err);
+      }
+    }
+    loadHistory();
+    return () => { cancelled = true; };
+  }, [roomId]);
 
   // Scroll chat to bottom on new message
   useEffect(() => {
@@ -35,8 +64,9 @@ export function RoomChat({ roomId, mediaTitle }: RoomChatProps) {
       setIsConnected(true);
       // Join the room immediately after connecting
       socket.emit("join_room", { roomId });
-      // Welcome system message
-      setMessages([
+      // Welcome system message appended after history
+      setMessages((prev) => [
+        ...prev,
         {
           _id: `system-${Date.now()}`,
           userId: "system",
@@ -78,10 +108,51 @@ export function RoomChat({ roomId, mediaTitle }: RoomChatProps) {
       console.error("[Socket] Error:", err.message);
     };
 
+    const handleUserJoined = (data: { userId: string; username: string }) => {
+      // System announcement in chat
+      setMessages((prev) => [
+        ...prev,
+        {
+          _id: `system-join-${data.userId}-${Date.now()}`,
+          userId: "system",
+          username: "System",
+          message: `${data.username} joined the watch party 🎉`,
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
+      ]);
+      // Notify parent to update the participants list
+      onUserJoined?.(data);
+    };
+
+    const handleUserLeft = (data: { userId: string; username?: string }) => {
+      // System announcement in chat
+      const displayName = data.username || "A participant";
+      setMessages((prev) => [
+        ...prev,
+        {
+          _id: `system-leave-${data.userId}-${Date.now()}`,
+          userId: "system",
+          username: "System",
+          message: `${displayName} left the watch party 👋`,
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
+      ]);
+      // Notify parent to remove them from the participants list
+      onUserLeft?.(data);
+    };
+
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
     socket.on("new_message", handleNewMessage);
     socket.on("error", handleError);
+    socket.on("user_joined", handleUserJoined);
+    socket.on("user_left", handleUserLeft);
 
     // Connect if not already
     if (!socket.connected) {
@@ -98,6 +169,8 @@ export function RoomChat({ roomId, mediaTitle }: RoomChatProps) {
       socket.off("disconnect", handleDisconnect);
       socket.off("new_message", handleNewMessage);
       socket.off("error", handleError);
+      socket.off("user_joined", handleUserJoined);
+      socket.off("user_left", handleUserLeft);
       disconnectSocket();
     };
   }, [authUser?._id, authUser?.username, roomId, mediaTitle]);

@@ -182,6 +182,37 @@ export default function RoomPage() {
     navigate("/browse/home");
   };
 
+  // ── Real-time participant updates via Socket ──────────────────────────────
+  const handleUserJoined = (user: { userId: string; username: string }) => {
+    setRoom((prev) => {
+      if (!prev) return prev;
+      // Avoid duplicates
+      const alreadyIn = prev.participants.some((p) => p._id === user.userId);
+      if (alreadyIn) return prev;
+      return {
+        ...prev,
+        participants: [
+          ...prev.participants,
+          {
+            _id: user.userId,
+            username: user.username,
+            profilePic: `https://api.dicebear.com/9.x/thumbs/svg?seed=${user.username}`,
+          },
+        ],
+      };
+    });
+  };
+
+  const handleUserLeft = (user: { userId: string }) => {
+    setRoom((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        participants: prev.participants.filter((p) => p._id !== user.userId),
+      };
+    });
+  };
+
   if (loading) {
     return (
       <div className="w-full h-[90vh] bg-black text-white flex flex-col items-center justify-center gap-4">
@@ -432,8 +463,13 @@ export default function RoomPage() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Live Chat constructed from scratch */}
-        <RoomChat roomId={room._id} mediaTitle={media.title} />
+        {/* RIGHT COLUMN: Live Chat */}
+        <RoomChat
+          roomId={room._id}
+          mediaTitle={media.title}
+          onUserJoined={handleUserJoined}
+          onUserLeft={handleUserLeft}
+        />
       </div>
     </div>
   );
