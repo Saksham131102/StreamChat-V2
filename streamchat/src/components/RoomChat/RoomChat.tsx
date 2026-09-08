@@ -10,9 +10,10 @@ interface RoomChatProps {
   mediaTitle: string;
   onUserJoined?: (user: { userId: string; username: string }) => void;
   onUserLeft?: (user: { userId: string }) => void;
+  onRoomClosed?: () => void;
 }
 
-export function RoomChat({ roomId, mediaTitle, onUserJoined, onUserLeft }: RoomChatProps) {
+export function RoomChat({ roomId, mediaTitle, onUserJoined, onUserLeft, onRoomClosed }: RoomChatProps) {
   const { authUser } = useAuthContext();
   const [messages, setMessages] = useState<IChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -37,7 +38,7 @@ export function RoomChat({ roomId, mediaTitle, onUserJoined, onUserLeft }: RoomC
             minute: "2-digit",
           }),
         }));
-        setMessages(history);
+        setMessages((prev) => [...prev, ...history]);
       } catch (err) {
         console.error("[Chat] Failed to load history:", err);
       }
@@ -147,12 +148,17 @@ export function RoomChat({ roomId, mediaTitle, onUserJoined, onUserLeft }: RoomC
       onUserLeft?.(data);
     };
 
+    const handleRoomClosed = () => {
+      onRoomClosed?.();
+    };
+
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
     socket.on("new_message", handleNewMessage);
     socket.on("error", handleError);
     socket.on("user_joined", handleUserJoined);
     socket.on("user_left", handleUserLeft);
+    socket.on("room_closed", handleRoomClosed);
 
     // Connect if not already
     if (!socket.connected) {
@@ -171,6 +177,7 @@ export function RoomChat({ roomId, mediaTitle, onUserJoined, onUserLeft }: RoomC
       socket.off("error", handleError);
       socket.off("user_joined", handleUserJoined);
       socket.off("user_left", handleUserLeft);
+      socket.off("room_closed", handleRoomClosed);
       disconnectSocket();
     };
   }, [authUser?._id, authUser?.username, roomId, mediaTitle]);

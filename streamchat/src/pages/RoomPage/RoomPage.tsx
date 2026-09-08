@@ -5,7 +5,7 @@ import {
   useParams
 } from "react-router-dom";
 import { getMediaById } from "@/api/media";
-import { getRoomByIdAPI, joinRoomAPI } from "@/api/room";
+import { getRoomByIdAPI, joinRoomAPI, closeRoomAPI } from "@/api/room";
 import { useAuthContext } from "@/contexts/authContext";
 import { RoomMembersDialog } from "@/components/RoomMembersDialog/RoomMembersDialog";
 import { RoomChat } from "@/components/RoomChat/RoomChat";
@@ -171,14 +171,37 @@ export default function RoomPage() {
     }
   };
 
+  const [closing, setClosing] = useState(false);
+
   const handleLeaveRoom = () => {
     // Navigate back to home dashboard
     navigate("/browse/home");
   };
 
-  const handleCloseRoom = () => {
-    // Notify room deletion, then exit
-    alert("Watch Party Room has been closed by the host.");
+  const handleCloseRoom = async () => {
+    if (!roomId || closing) return;
+    const confirmed = window.confirm(
+      "Are you sure you want to close this watch party? This will disconnect all viewers, delete all chats, and delete the room."
+    );
+    if (!confirmed) return;
+
+    try {
+      setClosing(true);
+      await closeRoomAPI(roomId);
+      navigate("/browse/home");
+    } catch (err: any) {
+      console.error("Failed to close room:", err);
+      alert(err.response?.data?.message || "Failed to close room. Please try again.");
+    } finally {
+      setClosing(false);
+    }
+  };
+
+  const handleRoomClosed = () => {
+    const isActualHost = room?.host_id === authUser?._id;
+    if (!isActualHost) {
+      alert("The watch party has been closed by the host.");
+    }
     navigate("/browse/home");
   };
 
@@ -367,10 +390,11 @@ export default function RoomPage() {
           {isHost ? (
             <button
               onClick={handleCloseRoom}
-              className="flex items-center gap-2 text-xs font-bold text-red-400 hover:text-red-300 bg-red-500/10 border border-red-500/25 px-4 py-2 rounded-full cursor-pointer transition-colors"
+              disabled={closing}
+              className="flex items-center gap-2 text-xs font-bold text-red-400 hover:text-red-300 bg-red-500/10 border border-red-500/25 px-4 py-2 rounded-full cursor-pointer transition-colors disabled:opacity-50"
             >
               <LogOut size={13} />
-              <span>Close Party</span>
+              <span>{closing ? "Closing Party..." : "Close Party"}</span>
             </button>
           ) : (
             <button
@@ -469,6 +493,7 @@ export default function RoomPage() {
           mediaTitle={media.title}
           onUserJoined={handleUserJoined}
           onUserLeft={handleUserLeft}
+          onRoomClosed={handleRoomClosed}
         />
       </div>
     </div>
