@@ -59,6 +59,11 @@ apiClient.interceptors.response.use(
       !originalRequest._retry &&
       originalRequest.url !== "/auth/refresh"
     ) {
+      // If there's no access token in storage, the user has already logged out intentionally.
+      // Don't attempt a token refresh — just reject immediately.
+      if (!localStorage.getItem("accessToken")) {
+        return Promise.reject(error);
+      }
       if (isRefreshing) {
         // If already refreshing, queue this failed request and wait for the new token
         return new Promise(function (resolve, reject) {

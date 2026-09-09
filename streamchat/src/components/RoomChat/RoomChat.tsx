@@ -18,7 +18,7 @@ export function RoomChat({ roomId, mediaTitle, onUserJoined, onUserLeft, onRoomC
   const [messages, setMessages] = useState<IChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isConnected, setIsConnected] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<ReturnType<typeof getSocket> | null>(null);
 
   // ── Load chat history on mount ───────────────────────────────────────────
@@ -47,9 +47,14 @@ export function RoomChat({ roomId, mediaTitle, onUserJoined, onUserLeft, onRoomC
     return () => { cancelled = true; };
   }, [roomId]);
 
-  // Scroll chat to bottom on new message
+  // Scroll chat to bottom on new message without scrolling the main window/page
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   }, [messages]);
 
   // Socket.IO setup
@@ -237,7 +242,10 @@ export function RoomChat({ roomId, mediaTitle, onUserJoined, onUserLeft, onRoomC
       </div>
 
       {/* Chat Feed */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3.5 scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-3.5 scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent"
+      >
         {messages.map((msg) => {
           const isMe = msg.userId === authUser?._id;
           const isSystem = msg.userId === "system";
@@ -291,7 +299,7 @@ export function RoomChat({ roomId, mediaTitle, onUserJoined, onUserLeft, onRoomC
             </div>
           );
         })}
-        <div ref={messagesEndRef} />
+        {/* End of messages anchor */}
       </div>
 
       {/* Chat Input Bar */}
