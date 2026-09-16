@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useAuthContext } from "@/contexts/authContext";
 import type { IChatMessage } from "@/types/IRoom";
-import { getSocket, disconnectSocket } from "@/lib/socket";
+import { getSocket } from "@/lib/socket";
 import { fetchRoomMessagesAPI } from "@/api/chat";
 import { MessageSquare, Send, Sparkles, Wifi, WifiOff } from "lucide-react";
 
@@ -20,6 +20,14 @@ export function RoomChat({ roomId, mediaTitle, onUserJoined, onUserLeft, onRoomC
   const [isConnected, setIsConnected] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<ReturnType<typeof getSocket> | null>(null);
+
+  // Keep the latest mediaTitle available inside the socket effect without
+  // needing it in that effect's dependency array (it changes async, mid-session,
+  // and shouldn't tear down/rebuild the socket listeners when it does).
+  const mediaTitleRef = useRef(mediaTitle);
+  useEffect(() => {
+    mediaTitleRef.current = mediaTitle;
+  }, [mediaTitle]);
 
   // ── Load chat history on mount ───────────────────────────────────────────
   useEffect(() => {
@@ -57,7 +65,13 @@ export function RoomChat({ roomId, mediaTitle, onUserJoined, onUserLeft, onRoomC
     }
   }, [messages]);
 
-  // Socket.IO setup
+  // Socket.IO setup — joins the room and attaches chat listeners.
+  // NOTE: This effect does NOT connect or disconnect the socket itself.
+  // RoomPage owns the connect/disconnect lifecycle (connects on mount,
+  // disconnects on unmount/roomId change) since that maps to "user is in this room."
+  // This effect only attaches/detaches its own listeners and joins/leaves the room,
+  // so it can safely re-run without killing the shared connection for other consumers
+  // (e.g. RoomPage's video-sync listeners).
   useEffect(() => {
     if (!authUser?._id || !authUser?.username) return;
 
@@ -77,7 +91,7 @@ export function RoomChat({ roomId, mediaTitle, onUserJoined, onUserLeft, onRoomC
           _id: `system-${Date.now()}`,
           userId: "system",
           username: "System",
-          message: `Welcome to the watch party for "${mediaTitle || "Movie"}"! 🍿`,
+          message: `Welcome to the watch party for "${mediaTitleRef.current || "Movie"}"! 🍿`,
           timestamp: new Date().toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -165,11 +179,10 @@ export function RoomChat({ roomId, mediaTitle, onUserJoined, onUserLeft, onRoomC
     socket.on("user_left", handleUserLeft);
     socket.on("room_closed", handleRoomClosed);
 
-    // Connect if not already
-    if (!socket.connected) {
-      socket.connect();
-    } else {
-      // Already connected from a previous mount — rejoin room
+    // RoomPage guarantees the socket is connected (or connecting) by the time
+    // this mounts. If it's already connected, join immediately; otherwise
+    // handleConnect will join once the connection completes.
+    if (socket.connected) {
       socket.emit("join_room", { roomId });
       setIsConnected(true);
     }
@@ -183,9 +196,10 @@ export function RoomChat({ roomId, mediaTitle, onUserJoined, onUserLeft, onRoomC
       socket.off("user_joined", handleUserJoined);
       socket.off("user_left", handleUserLeft);
       socket.off("room_closed", handleRoomClosed);
-      disconnectSocket();
+      // Intentionally no disconnectSocket() here — the shared socket's
+      // connect/disconnect lifecycle belongs to RoomPage, not this component.
     };
-  }, [authUser?._id, authUser?.username, roomId, mediaTitle]);
+  }, [authUser?._id, authUser?.username, roomId]);
 
   const handleSendMessage = useCallback(
     (e: React.FormEvent) => {

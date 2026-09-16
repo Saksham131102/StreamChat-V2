@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuthContext } from "../../contexts/authContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { logoutAPI } from "@/api/auth";
+import { disconnectSocket } from "@/lib/socket";
 
 export const useLogout = () => {
   const [error, setError] = useState<string | null>(null);
@@ -30,9 +31,12 @@ export const useLogout = () => {
       // Clear React Query cache so old user data doesn't persist for the next user
       queryClient.clear();
 
+      // disconnect socket on logout
+      disconnectSocket();
+
       // Clear the user from global context
       setAuthUser(null);
-      
+
       setIsLoading(false);
     }
   };

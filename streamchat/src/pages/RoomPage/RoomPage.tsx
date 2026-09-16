@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   // useLocation,
   useNavigate,
@@ -9,7 +9,8 @@ import { getRoomByIdAPI, joinRoomAPI, closeRoomAPI } from "@/api/room";
 import { useAuthContext } from "@/contexts/authContext";
 import { RoomMembersDialog } from "@/components/RoomMembersDialog/RoomMembersDialog";
 import { RoomChat } from "@/components/RoomChat/RoomChat";
-import VideoPlayer from "@/components/VideoPlayer/VideoPlayer";
+import VideoPlayer, { type VideoPlayerHandle, type MediaSyncPayload } from "@/components/VideoPlayer/VideoPlayer";
+import { disconnectSocket, getSocket } from "@/lib/socket";
 import type { IRoom, IRoomMember } from "@/types/IRoom";
 import type { IMedia } from "@/types/media";
 import {
@@ -29,6 +30,7 @@ export default function RoomPage() {
   const { authUser } = useAuthContext();
 
   // Local state
+  const [showControlNotice, setShowControlNotice] = useState(true);
   const [media, setMedia] = useState<IMedia | null>(null);
   const [room, setRoom] = useState<IRoom | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +38,8 @@ export default function RoomPage() {
 
   // Testing/Demo Role toggle so user can easily test Host vs Viewer experience
   const [testingRole, setTestingRole] = useState<"host" | "viewer">("viewer");
+  const isHost = testingRole === "host";
+  const playerRef = useRef<VideoPlayerHandle>(null);
 
   // Private room joining state
   const [isPasswordRequired, setIsPasswordRequired] = useState(false);
@@ -43,6 +47,30 @@ export default function RoomPage() {
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Reset when switching rooms or role changes
+  useEffect(() => {
+    setShowControlNotice(!isHost);
+  }, [isHost, roomId]);
+
+  // Handler — this click is what "unlocks" programmatic play() for this <video> element
+  const handleDismissControlNotice = async () => {
+    try {
+      // Prime the element with a real user-gesture play() call.
+      // Browsers remember this element has been played-via-gesture for the
+      // rest of the page session, so later remote play() calls (from socket
+      // events) will no longer be blocked.
+      await playerRef.current?.play();
+      // Immediately pause again — we don't want playback to actually start
+      // here, just to satisfy the gesture requirement. There may be a very
+      // brief single-frame flash; acceptable trade-off for unlocking autoplay.
+      playerRef.current?.pause();
+    } catch (err) {
+      console.error("[RoomPage] Failed to prime playback:", err);
+    } finally {
+      setShowControlNotice(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -207,6 +235,20 @@ export default function RoomPage() {
 
   // ── Real-time participant updates via Socket ──────────────────────────────
   const handleUserJoined = (user: { userId: string; username: string }) => {
+    // If we are host, broadcast current playback state immediately so the new participant catches up!
+    if (isHost && playerRef.current && authUser?._id && roomId) {
+      const socket = getSocket(authUser._id, authUser.username);
+      if (socket.connected) {
+        socket.emit("media_sync", {
+          roomId,
+          type: "sync",
+          currentTime: playerRef.current.getCurrentTime(),
+          paused: playerRef.current.getPaused(),
+          playbackRate: playerRef.current.getPlaybackRate(),
+        });
+      }
+    }
+
     setRoom((prev) => {
       if (!prev) return prev;
       // Avoid duplicates
@@ -235,6 +277,100 @@ export default function RoomPage() {
       };
     });
   };
+
+  // ── Host Action Broadcasting ──────────────────────────────────────────────
+  const handleHostMediaAction = useCallback(
+    (action: MediaSyncPayload) => {
+      if (!isHost || !roomId || !authUser?._id) return;
+      const socket = getSocket(authUser._id, authUser.username);
+      if (socket.connected) {
+        socket.emit("media_sync", {
+          roomId,
+          ...action,
+        });
+      }
+    },
+    [isHost, roomId, authUser?._id, authUser?.username]
+  );
+
+  // New effect — owns the actual socket lifecycle for "in this room"
+  useEffect(() => {
+    if (!authUser?._id || !authUser?.username) return;
+    const socket = getSocket(authUser._id, authUser.username);
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    return () => {
+      disconnectSocket();
+    };
+  }, [authUser?._id, authUser?.username, roomId]);
+
+  // ── Socket.IO Real-Time Video Sync ────────────────────────────────────────
+  useEffect(() => {
+    if (!authUser?._id || !authUser?.username || !roomId) return;
+    const socket = getSocket(authUser._id, authUser.username);
+
+    // Viewer handler: sync local video to host instructions
+    const handleMediaSync = (payload: MediaSyncPayload) => {
+      if (isHost) return; // Host ignores incoming sync events
+      if (!playerRef.current) return;
+      playerRef.current.syncState(payload);
+    };
+
+    // Host handler: answer sync requests from new participants
+    const handleRequestMediaSync = () => {
+      if (!isHost || !playerRef.current) return;
+      socket.emit("media_sync", {
+        roomId,
+        type: "sync",
+        currentTime: playerRef.current.getCurrentTime(),
+        paused: playerRef.current.getPaused(),
+        playbackRate: playerRef.current.getPlaybackRate(),
+      });
+    };
+
+    socket.on("media_sync", handleMediaSync);
+    socket.on("request_media_sync", handleRequestMediaSync);
+
+    // If Viewer: request latest media state from the host on join/connect
+    if (!isHost) {
+      if (socket.connected) {
+        socket.emit("request_media_sync", { roomId });
+      } else {
+        socket.once("connect", () => {
+          socket.emit("request_media_sync", { roomId });
+        });
+      }
+    }
+
+    return () => {
+      socket.off("media_sync", handleMediaSync);
+      socket.off("request_media_sync", handleRequestMediaSync);
+    };
+  }, [authUser?._id, authUser?.username, roomId, isHost]);
+
+  // ── Periodic Sync Heartbeat (Host only) ────────────────────────────────────
+  useEffect(() => {
+    if (!isHost || !roomId || !authUser?._id) return;
+
+    const interval = setInterval(() => {
+      if (playerRef.current && !playerRef.current.getPaused()) {
+        const socket = getSocket(authUser._id, authUser.username);
+        if (socket.connected) {
+          socket.emit("media_sync", {
+            roomId,
+            type: "sync",
+            currentTime: playerRef.current.getCurrentTime(),
+            paused: false,
+            playbackRate: playerRef.current.getPlaybackRate(),
+          });
+        }
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isHost, roomId, authUser?._id, authUser?.username]);
 
   if (loading) {
     return (
@@ -315,7 +451,6 @@ export default function RoomPage() {
     );
   }
 
-  const isHost = testingRole === "host";
   const hostMember = room.participants.find((p) => p._id === room.host_id);
   const hostUsername = hostMember ? hostMember.username : "Host";
 
@@ -422,22 +557,34 @@ export default function RoomPage() {
             </div>
 
             {/* Video Player */}
-            <VideoPlayer src={media.media_assets.trailer.url} poster={media.media_assets.backdrop.url} className="w-full h-full" />
+            <VideoPlayer
+              ref={playerRef}
+              src={media.media_assets.trailer.url}
+              poster={media.media_assets.backdrop.url}
+              className="w-full h-full"
+              isHost={isHost}
+              onMediaAction={handleHostMediaAction}
+            />
 
-            {/* Controls restriction overlay for non-hosts */}
-            {!isHost && (
-              <div
-                className="absolute inset-0 z-30 bg-black/5 hover:bg-black/10 transition-colors flex items-center justify-center pointer-events-auto"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                }}
-              >
-                <div className="bg-black/85 backdrop-blur-md border border-amber-500/25 px-5 py-3.5 rounded-2xl flex flex-col items-center gap-2 text-center max-w-[280px] pointer-events-none select-none shadow-xl">
-                  <Crown className="text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.3)]" size={24} />
-                  <span className="text-xs font-bold text-neutral-100">Controls Synced with Host</span>
-                  <span className="text-[10px] text-neutral-400">Only the watch party host can control video playback, pause, and seeking.</span>
+            {!isHost && showControlNotice && (
+              <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4 p-6 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-purple-600/10 border border-purple-600/20 flex items-center justify-center text-purple-400">
+                  <Crown size={26} />
                 </div>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-bold text-neutral-100">
+                    {isHost ? "You" : hostUsername} is controlling playback
+                  </h3>
+                  <p className="text-xs text-neutral-400 max-w-xs">
+                    Play, pause, and seek are synced automatically from the host — just sit back and watch.
+                  </p>
+                </div>
+                <button
+                  onClick={handleDismissControlNotice}
+                  className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-xl transition-all active:scale-95 cursor-pointer"
+                >
+                  Got it
+                </button>
               </div>
             )}
           </div>

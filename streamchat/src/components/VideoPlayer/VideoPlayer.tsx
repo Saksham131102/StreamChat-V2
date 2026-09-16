@@ -1,4 +1,13 @@
-import { type CSSProperties, type ComponentProps, forwardRef, type ReactNode, isValidElement } from 'react';
+import {
+  type CSSProperties,
+  type ComponentProps,
+  forwardRef,
+  type ReactNode,
+  isValidElement,
+  useRef,
+  useImperativeHandle,
+  useCallback,
+} from 'react';
 import {
   createPlayer,
   Poster,
@@ -32,11 +41,31 @@ const SEEK_TIME = 10;
 
 export const Player = createPlayer({ features: videoFeatures });
 
+export interface MediaSyncPayload {
+  type: "play" | "pause" | "seek" | "ratechange" | "sync";
+  currentTime: number;
+  paused?: boolean;
+  playbackRate?: number;
+}
+
+export interface VideoPlayerHandle {
+  play(): Promise<void>;
+  pause(): void;
+  seek(time: number): Promise<number>;
+  setPlaybackRate(rate: number): void;
+  getCurrentTime(): number;
+  getPaused(): boolean;
+  getPlaybackRate(): number;
+  syncState(payload: MediaSyncPayload): Promise<void>;
+}
+
 export interface videoPlayerProps {
   src?: string;
   style?: CSSProperties;
   className?: string;
   poster?: string | undefined;
+  isHost?: boolean;
+  onMediaAction?: (payload: MediaSyncPayload) => void;
 }
 
 function isString(value: unknown): value is string {
@@ -151,11 +180,171 @@ function VolumePopover(): ReactNode {
 }
 
 
-const VideoPlayer = ({ src, className, poster }: videoPlayerProps) => {
+interface VideoPlayerBridgeProps {
+  isRemoteActionRef: React.MutableRefObject<boolean>;
+}
+
+const VideoPlayerBridge = forwardRef<VideoPlayerHandle, VideoPlayerBridgeProps>(
+  function VideoPlayerBridge({ isRemoteActionRef }, ref) {
+    const store = Player.usePlayer();
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        play: async () => {
+          isRemoteActionRef.current = true;
+          try {
+            await store.play();
+          } finally {
+            setTimeout(() => {
+              isRemoteActionRef.current = false;
+            }, 300);
+          }
+        },
+        pause: () => {
+          isRemoteActionRef.current = true;
+          try {
+            store.pause();
+          } finally {
+            setTimeout(() => {
+              isRemoteActionRef.current = false;
+            }, 300);
+          }
+        },
+        seek: async (time: number) => {
+          isRemoteActionRef.current = true;
+          try {
+            return await store.seek(time);
+          } finally {
+            setTimeout(() => {
+              isRemoteActionRef.current = false;
+            }, 300);
+          }
+        },
+        setPlaybackRate: (rate: number) => {
+          isRemoteActionRef.current = true;
+          try {
+            store.setPlaybackRate(rate);
+          } finally {
+            setTimeout(() => {
+              isRemoteActionRef.current = false;
+            }, 300);
+          }
+        },
+        getCurrentTime: () => store.currentTime ?? 0,
+        getPaused: () => store.paused ?? true,
+        getPlaybackRate: () => store.playbackRate ?? 1,
+        syncState: async (payload: MediaSyncPayload) => {
+          isRemoteActionRef.current = true;
+          try {
+            if (typeof payload.playbackRate === "number" && store.playbackRate !== payload.playbackRate) {
+              store.setPlaybackRate(payload.playbackRate);
+            }
+            if (typeof payload.currentTime === "number" && !isNaN(payload.currentTime)) {
+              const diff = Math.abs((store.currentTime ?? 0) - payload.currentTime);
+              // Drift compensation: if viewer is more than 0.5s off, seek to host position
+              if (diff > 0.5) {
+                await store.seek(payload.currentTime);
+              }
+            }
+            if (payload.type === "play" || (payload.type === "sync" && !payload.paused)) {
+              if (store.paused) {
+                await store.play();
+              }
+            } else if (payload.type === "pause" || (payload.type === "sync" && payload.paused)) {
+              if (!store.paused) {
+                store.pause();
+              }
+            }
+          } catch (err) {
+            console.error("[VideoPlayerBridge] Sync error:", err);
+          } finally {
+            setTimeout(() => {
+              isRemoteActionRef.current = false;
+            }, 350);
+          }
+        },
+      }),
+      [store, isRemoteActionRef]
+    );
+
+    return null;
+  }
+);
+
+const VideoPlayer = forwardRef<VideoPlayerHandle, videoPlayerProps>(function VideoPlayer(
+  { src, className, poster, isHost = true, onMediaAction }: videoPlayerProps,
+  ref
+) {
+  const isRemoteActionRef = useRef(false);
+
+  const handleVideoPlay = useCallback(
+    (e: React.SyntheticEvent<HTMLVideoElement>) => {
+      if (!isHost || isRemoteActionRef.current || !onMediaAction) return;
+      const target = e.currentTarget;
+      onMediaAction({
+        type: "play",
+        currentTime: target.currentTime,
+        paused: false,
+        playbackRate: target.playbackRate,
+      });
+    },
+    [isHost, onMediaAction]
+  );
+
+  const handleVideoPause = useCallback(
+    (e: React.SyntheticEvent<HTMLVideoElement>) => {
+      if (!isHost || isRemoteActionRef.current || !onMediaAction) return;
+      const target = e.currentTarget;
+      onMediaAction({
+        type: "pause",
+        currentTime: target.currentTime,
+        paused: true,
+        playbackRate: target.playbackRate,
+      });
+    },
+    [isHost, onMediaAction]
+  );
+
+  const handleVideoSeeked = useCallback(
+    (e: React.SyntheticEvent<HTMLVideoElement>) => {
+      if (!isHost || isRemoteActionRef.current || !onMediaAction) return;
+      const target = e.currentTarget;
+      onMediaAction({
+        type: "seek",
+        currentTime: target.currentTime,
+        paused: target.paused,
+        playbackRate: target.playbackRate,
+      });
+    },
+    [isHost, onMediaAction]
+  );
+
+  const handleVideoRateChange = useCallback(
+    (e: React.SyntheticEvent<HTMLVideoElement>) => {
+      if (!isHost || isRemoteActionRef.current || !onMediaAction) return;
+      const target = e.currentTarget;
+      onMediaAction({
+        type: "ratechange",
+        currentTime: target.currentTime,
+        paused: target.paused,
+        playbackRate: target.playbackRate,
+      });
+    },
+    [isHost, onMediaAction]
+  );
+
   return (
     <Player.Provider>
       <Container className={`media-default-skin media-default-skin--video ${className ?? ''}`}>
-        <Video src={src} playsInline />
+        <Video
+          src={src}
+          playsInline
+          onPlay={handleVideoPlay}
+          onPause={handleVideoPause}
+          onSeeked={handleVideoSeeked}
+          onRateChange={handleVideoRateChange}
+        />
 
         {poster && (
           <Poster src={isString(poster) ? poster : undefined} render={isRenderProp(poster) ? poster : undefined} />
@@ -187,74 +376,85 @@ const VideoPlayer = ({ src, className, poster }: videoPlayerProps) => {
 
         <Controls.Root className="media-surface media-controls">
           <Tooltip.Provider>
-            <div className="media-button-group">
-              <Tooltip.Root side="top">
-                <Tooltip.Trigger
-                  render={
-                    <PlayButton className="media-button--play" render={<Button />}>
-                      <RestartIcon className="media-icon media-icon--restart" />
-                      <PlayIcon className="media-icon media-icon--play" />
-                      <PauseIcon className="media-icon media-icon--pause" />
-                    </PlayButton>
-                  }
-                />
-                <Tooltip.Popup className="media-surface media-tooltip" />
-              </Tooltip.Root>
+            {!isHost ? (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-semibold select-none mr-2">
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                <span>Host Controlled</span>
+              </div>
+            ) : (
+              <div className="media-button-group">
+                <Tooltip.Root side="top">
+                  <Tooltip.Trigger
+                    render={
+                      <PlayButton className="media-button--play" render={<Button />}>
+                        <RestartIcon className="media-icon media-icon--restart" />
+                        <PlayIcon className="media-icon media-icon--play" />
+                        <PauseIcon className="media-icon media-icon--pause" />
+                      </PlayButton>
+                    }
+                  />
+                  <Tooltip.Popup className="media-surface media-tooltip" />
+                </Tooltip.Root>
 
-              <Tooltip.Root side="top">
-                <Tooltip.Trigger
-                  render={
-                    <SeekButton seconds={-SEEK_TIME} className="media-button--seek" render={<Button />}>
-                      <span className="media-icon__container">
-                        <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
-                        <span className="media-icon__label">{SEEK_TIME}</span>
-                      </span>
-                    </SeekButton>
-                  }
-                />
-                <Tooltip.Popup className="media-surface media-tooltip">Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
-              </Tooltip.Root>
+                <Tooltip.Root side="top">
+                  <Tooltip.Trigger
+                    render={
+                      <SeekButton seconds={-SEEK_TIME} className="media-button--seek" render={<Button />}>
+                        <span className="media-icon__container">
+                          <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
+                          <span className="media-icon__label">{SEEK_TIME}</span>
+                        </span>
+                      </SeekButton>
+                    }
+                  />
+                  <Tooltip.Popup className="media-surface media-tooltip">Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+                </Tooltip.Root>
 
-              <Tooltip.Root side="top">
-                <Tooltip.Trigger
-                  render={
-                    <SeekButton seconds={SEEK_TIME} className="media-button--seek" render={<Button />}>
-                      <span className="media-icon__container">
-                        <SeekIcon className="media-icon media-icon--seek" />
-                        <span className="media-icon__label">{SEEK_TIME}</span>
-                      </span>
-                    </SeekButton>
-                  }
-                />
-                <Tooltip.Popup className="media-surface media-tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
-              </Tooltip.Root>
-            </div>
+                <Tooltip.Root side="top">
+                  <Tooltip.Trigger
+                    render={
+                      <SeekButton seconds={SEEK_TIME} className="media-button--seek" render={<Button />}>
+                        <span className="media-icon__container">
+                          <SeekIcon className="media-icon media-icon--seek" />
+                          <span className="media-icon__label">{SEEK_TIME}</span>
+                        </span>
+                      </SeekButton>
+                    }
+                  />
+                  <Tooltip.Popup className="media-surface media-tooltip">Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+                </Tooltip.Root>
+              </div>
+            )}
 
             <div className="media-time-controls">
               <Time.Value type="current" className="media-time" />
-              <TimeSlider.Root className="media-slider">
+              <TimeSlider.Root className={`media-slider ${!isHost ? "pointer-events-none cursor-default" : ""}`}>
                 <TimeSlider.Track className="media-slider__track">
                   <TimeSlider.Fill className="media-slider__fill" />
                   <TimeSlider.Buffer className="media-slider__buffer" />
                 </TimeSlider.Track>
-                <TimeSlider.Thumb className="media-slider__thumb" />
+                {isHost && <TimeSlider.Thumb className="media-slider__thumb" />}
 
-                <div className="media-surface media-preview media-slider__preview">
-                  <Slider.Thumbnail className="media-preview__thumbnail" />
-                  <TimeSlider.Value type="pointer" className="media-time media-preview__time" />
-                  <SpinnerIcon className="media-preview__spinner media-icon" />
-                </div>
+                {isHost && (
+                  <div className="media-surface media-preview media-slider__preview">
+                    <Slider.Thumbnail className="media-preview__thumbnail" />
+                    <TimeSlider.Value type="pointer" className="media-time media-preview__time" />
+                    <SpinnerIcon className="media-preview__spinner media-icon" />
+                  </div>
+                )}
               </TimeSlider.Root>
               <Time.Value type="duration" className="media-time" />
             </div>
 
             <div className="media-button-group">
-              <Tooltip.Root side="top">
-                <Tooltip.Trigger
-                  render={<PlaybackRateButton className="media-button--playback-rate" render={<Button />} />}
-                />
-                <Tooltip.Popup className="media-surface media-tooltip">Toggle playback rate</Tooltip.Popup>
-              </Tooltip.Root>
+              {isHost && (
+                <Tooltip.Root side="top">
+                  <Tooltip.Trigger
+                    render={<PlaybackRateButton className="media-button--playback-rate" render={<Button />} />}
+                  />
+                  <Tooltip.Popup className="media-surface media-tooltip">Toggle playback rate</Tooltip.Popup>
+                </Tooltip.Root>
+              )}
 
               <VolumePopover />
 
@@ -312,33 +512,46 @@ const VideoPlayer = ({ src, className, poster }: videoPlayerProps) => {
         <div className="media-overlay" />
 
         {/* Hotkeys */}
-        <MediaHotkey keys="Space" action="togglePaused" />
-        <MediaHotkey keys="k" action="togglePaused" />
+        {isHost && (
+          <>
+            <MediaHotkey keys="Space" action="togglePaused" />
+            <MediaHotkey keys="k" action="togglePaused" />
+            <MediaHotkey keys="ArrowRight" action="seekStep" value={5} />
+            <MediaHotkey keys="ArrowLeft" action="seekStep" value={-5} />
+            <MediaHotkey keys="l" action="seekStep" value={10} />
+            <MediaHotkey keys="j" action="seekStep" value={-10} />
+            <MediaHotkey keys="0-9" action="seekToPercent" />
+            <MediaHotkey keys="Home" action="seekToPercent" value={0} />
+            <MediaHotkey keys="End" action="seekToPercent" value={100} />
+            <MediaHotkey keys=">" action="speedUp" />
+            <MediaHotkey keys="<" action="speedDown" />
+          </>
+        )}
+
+        {/* Universal hotkeys for all users */}
         <MediaHotkey keys="m" action="toggleMuted" />
         <MediaHotkey keys="f" action="toggleFullscreen" />
         <MediaHotkey keys="c" action="toggleSubtitles" />
         <MediaHotkey keys="i" action="togglePictureInPicture" />
-        <MediaHotkey keys="ArrowRight" action="seekStep" value={5} />
-        <MediaHotkey keys="ArrowLeft" action="seekStep" value={-5} />
-        <MediaHotkey keys="l" action="seekStep" value={10} />
-        <MediaHotkey keys="j" action="seekStep" value={-10} />
         <MediaHotkey keys="ArrowUp" action="volumeStep" value={0.05} />
         <MediaHotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
-        <MediaHotkey keys="0-9" action="seekToPercent" />
-        <MediaHotkey keys="Home" action="seekToPercent" value={0} />
-        <MediaHotkey keys="End" action="seekToPercent" value={100} />
-        <MediaHotkey keys=">" action="speedUp" />
-        <MediaHotkey keys="<" action="speedDown" />
 
         {/* Gestures */}
-        <MediaGesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+        {isHost && (
+          <>
+            <MediaGesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+            <MediaGesture type="doubletap" action="seekStep" value={-10} region="left" />
+            <MediaGesture type="doubletap" action="toggleFullscreen" region="center" />
+            <MediaGesture type="doubletap" action="seekStep" value={10} region="right" />
+          </>
+        )}
         <MediaGesture type="tap" action="toggleControls" pointer="touch" />
-        <MediaGesture type="doubletap" action="seekStep" value={-10} region="left" />
-        <MediaGesture type="doubletap" action="toggleFullscreen" region="center" />
-        <MediaGesture type="doubletap" action="seekStep" value={10} region="right" />
+
+        {/* Imperative bridge component to connect ref & Player store */}
+        <VideoPlayerBridge ref={ref} isRemoteActionRef={isRemoteActionRef} />
       </Container>
     </Player.Provider>
-  )
-}
+  );
+});
 
-export default VideoPlayer
+export default VideoPlayer;
